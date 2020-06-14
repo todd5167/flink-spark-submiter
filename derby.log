@@ -1,6 +1,6 @@
 ----------------------------------------------------------------
-Sun Jun 14 09:47:40 CST 2020:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.2.0 - (1582446): instance a816c00e-0172-b082-c836-000009642518 
+Sun Jun 14 23:43:36 CST 2020:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.2.0 - (1582446): instance a816c00e-0172-b380-1a88-0000094ca248 
 on database directory /Users/maqi/code/ClustersSubmiter/metastore_db with class loader sun.misc.Launcher$AppClassLoader@18b4aac2 
 Loaded from file:/Users/maqi/.m2/repository/org/apache/derby/derby/10.10.2.0/derby-10.10.2.0.jar
 java.vendor=Oracle Corporation
