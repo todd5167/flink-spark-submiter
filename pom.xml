@@ -11,6 +11,7 @@
     <modules>
         <module>spark-yarn-submiter</module>
         <module>spark-k8s-submiter</module>
+        <module>flink-yarn-submiter</module>
     </modules>
 
 

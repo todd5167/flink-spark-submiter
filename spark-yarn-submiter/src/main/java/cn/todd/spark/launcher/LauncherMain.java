@@ -51,7 +51,7 @@ public class LauncherMain {
         String zipSql = StringUtil.zip(sql);
 
         paramsMap.put("sql", zipSql);
-        paramsMap.put("appName", "mqqqTest");
+        paramsMap.put("appName", "toddSparkSubmit");
         paramsMap.put("sparkSessionConf", getSparkSessionConf());
 
 
@@ -79,20 +79,21 @@ public class LauncherMain {
 
     public static void main(String[] args) throws Exception {
         boolean openKerberos = true;
-        String  yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
+        String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
         YarnConfiguration yarnConf = YarnConfLoaderUtil.getYarnConf(yarnConfDir);
+        String applicationId = "";
 
         if (openKerberos) {
             String principal = "hdfs/node1@DTSTACK.COM";
             String keyTab = "/Users/maqi/tmp/hadoopconf/cdh514/hdfs.keytab";
 
-            System.setProperty("java.security.krb5.conf","/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
+            System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
 
             UserGroupInformation.setConfiguration(yarnConf);
             UserGroupInformation userGroupInformation = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal, keyTab);
 
 
-            String applicationId = userGroupInformation.doAs(new PrivilegedAction<String>() {
+            applicationId = userGroupInformation.doAs(new PrivilegedAction<String>() {
                 @Override
                 public String run() {
                     try {
@@ -103,9 +104,11 @@ public class LauncherMain {
                     return "";
                 }
             });
-
-            System.out.println(applicationId);
+        } else {
+            LauncherMain.run(yarnConfDir, yarnConf);
         }
+
+        System.out.println(applicationId);
     }
 
     private static Map<String, String> getSparkSessionConf() {
@@ -127,7 +130,7 @@ public class LauncherMain {
         sparkConf.set("spark.yarn.principal", "hdfs/node1@DTSTACK.COM");
         sparkConf.set("security", "true");
 
-        sparkConf.setAppName("mqTest0000003");
+        sparkConf.setAppName("todd spark submit");
         return sparkConf;
     }
 }

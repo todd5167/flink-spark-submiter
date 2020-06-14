@@ -12,14 +12,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- *
- *
- * Date: 2017年03月10日 下午1:16:37
- * Company: www.dtstack.com
- * @author sishu.yss
- *
- */
 public class PublicUtil {
 
 	private static ObjectMapper objectMapper = new ObjectMapper();
