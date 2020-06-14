@@ -39,9 +39,9 @@ public class LauncherMain {
         System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
 
         // 可执行jar包路径
-        String runJarPath = "/Users/maqi/code/LearnCode/flink110/target/flink110-1.0-SNAPSHOT.jar";
+        String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
         // 任务参数
-        String[] execArgs = new String[]{"-jobName","flink110Submit"};
+        String[] execArgs = new String[]{"-jobName","flink110Submit","--topic","mqTest01","--bootstrapServers","172.16.8.107:9092"};
         // 任务名称
         String jobName = "Flink perjob submit";
         // flink 文件夹路径

@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>spark-sql-proxy</module>
+        <module>flink-kafka-reader</module>
     </modules>
 
 
