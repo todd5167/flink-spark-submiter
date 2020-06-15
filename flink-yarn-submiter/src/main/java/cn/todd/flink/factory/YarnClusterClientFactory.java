@@ -80,7 +80,7 @@ public enum YarnClusterClientFactory implements AbstractClusterClientFactory {
         }
     }
 
-    private YarnConfiguration getYarnConf(String yarnConfDir) throws IOException {
+    public YarnConfiguration getYarnConf(String yarnConfDir) throws IOException {
         YarnConfiguration yarnConf = new YarnConfiguration();
         FileUtils.listFilesInDirectory(new File(yarnConfDir).toPath(), this::isXmlFile)
                 .stream()

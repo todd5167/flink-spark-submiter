@@ -60,7 +60,7 @@ public class YarnJobClusterExecutor {
         this.jobParamsInfo = jobParamsInfo;
     }
 
-    public void exec() throws Exception {
+    public String exec() throws Exception {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
 
         Optional.ofNullable(jobParamsInfo.getDependFile())
@@ -80,8 +80,10 @@ public class YarnJobClusterExecutor {
 
         String applicationId = applicationIdClusterClientProvider.getClusterClient().getClusterId().toString();
         String flinkJobId = jobGraph.getJobID().toString();
-        String tips = String.format("deploy per_job with appId: %s, jobId: %s", applicationId, flinkJobId);
-        System.out.println(tips);
+
+        LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, flinkJobId);
+
+        return applicationId;
     }
 
     private void appendApplicationConfig(Configuration flinkConfig, JobParamsInfo jobParamsInfo) {

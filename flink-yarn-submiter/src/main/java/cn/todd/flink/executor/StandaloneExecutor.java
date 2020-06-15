@@ -29,6 +29,8 @@ import org.apache.flink.client.program.ClusterClient;
 import org.apache.flink.client.program.ClusterClientProvider;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.jobgraph.JobGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -36,14 +38,15 @@ import org.apache.flink.runtime.jobgraph.JobGraph;
  * @author todd5167
  */
 public class StandaloneExecutor {
+    private static final Logger LOG = LoggerFactory.getLogger(StandaloneExecutor.class);
+
     JobParamsInfo jobParamsInfo;
 
     public StandaloneExecutor(JobParamsInfo jobParamsInfo) {
         this.jobParamsInfo = jobParamsInfo;
     }
 
-    public void exec() throws Exception {
-
+    public String exec() throws Exception {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
         JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, jobParamsInfo.getDependFile());
 
@@ -52,11 +55,10 @@ public class StandaloneExecutor {
         ClusterClientProvider clusterClientProvider = clusterDescriptor.retrieve(StandaloneClusterId.getInstance());
         ClusterClient clusterClient = clusterClientProvider.getClusterClient();
 
-
         JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
-        String jobId = jobExecutionResult.getJobID().toString();
-        System.out.println("jobID:" + jobId);
+        LOG.info("jobID:{}", jobExecutionResult.getJobID().toString());
 
+        return "";
     }
 
 

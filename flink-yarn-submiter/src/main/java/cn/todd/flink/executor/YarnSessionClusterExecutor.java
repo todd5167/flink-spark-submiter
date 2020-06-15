@@ -31,6 +31,8 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
@@ -41,13 +43,15 @@ import java.util.Optional;
  * @author todd5167
  */
 public class YarnSessionClusterExecutor {
+    private static final Logger LOG = LoggerFactory.getLogger(YarnSessionClusterExecutor.class);
+
     JobParamsInfo jobParamsInfo;
 
     public YarnSessionClusterExecutor(JobParamsInfo jobParamsInfo) {
         this.jobParamsInfo = jobParamsInfo;
     }
 
-    public void exec() throws Exception {
+    public String exec() throws Exception {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
         Optional.ofNullable(jobParamsInfo.getDependFile())
                 .ifPresent(files -> JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, files));
@@ -65,9 +69,9 @@ public class YarnSessionClusterExecutor {
         ClusterClient<ApplicationId> clusterClient = retrieve.getClusterClient();
 
         JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
-        String jobId = jobExecutionResult.getJobID().toString();
-        System.out.println("jobID:" + jobId);
+        LOG.info("jobID:{}", jobExecutionResult.getJobID().toString());
 
+        return applicationId.toString();
     }
 
 

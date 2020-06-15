@@ -23,7 +23,9 @@ import cn.todd.flink.entity.JobParamsInfo;
 import cn.todd.flink.executor.StandaloneExecutor;
 import cn.todd.flink.executor.YarnJobClusterExecutor;
 import cn.todd.flink.executor.YarnSessionClusterExecutor;
+import cn.todd.flink.log.RunningLog;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -35,13 +37,33 @@ import java.util.Properties;
  */
 
 public class LauncherMain {
+
+    public static String runFlinkJob(JobParamsInfo jobParamsInfo, String execMode) throws Exception {
+        String yarnApplicationId = "";
+        switch (execMode) {
+            case "yarnSession":
+                yarnApplicationId = new YarnSessionClusterExecutor(jobParamsInfo).exec();
+                break;
+            case "yarnPerjob":
+                yarnApplicationId = new YarnJobClusterExecutor(jobParamsInfo).exec();
+                break;
+            case "standalone":
+                new StandaloneExecutor(jobParamsInfo).exec();
+                break;
+            default:
+                throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
+        }
+        return yarnApplicationId;
+    }
+
     public static void main(String[] args) throws Exception {
+
         System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
 
         // 可执行jar包路径
         String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
         // 任务参数
-        String[] execArgs = new String[]{"-jobName","flink110Submit","--topic","mqTest01","--bootstrapServers","172.16.8.107:9092"};
+        String[] execArgs = new String[]{"-jobName", "flink110Submit", "--topic", "mqTest01", "--bootstrapServers", "172.16.8.107:9092"};
         // 任务名称
         String jobName = "Flink perjob submit";
         // flink 文件夹路径
@@ -49,7 +71,8 @@ public class LauncherMain {
         // flink lib包路径
         String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
         //  yarn 文件夹路径
-        String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
+        //        String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
+        String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
         //  作业依赖的外部文件，例如：udf jar , keytab
         String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
         // 任务提交队列
@@ -75,23 +98,8 @@ public class LauncherMain {
                 .setQueue(queue)
                 .build();
 
-        runFlinkJob(jobParamsInfo, execMode);
-
-    }
-
-    public static void runFlinkJob(JobParamsInfo jobParamsInfo, String execMode) throws Exception {
-        switch (execMode) {
-            case "yarnSession":
-                new YarnSessionClusterExecutor(jobParamsInfo).exec();
-                break;
-            case "yarnPerjob":
-                new YarnJobClusterExecutor(jobParamsInfo).exec();
-                break;
-            case "standalone":
-                new StandaloneExecutor(jobParamsInfo).exec();
-                break;
-            default:
-                throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
-        }
+        String applicationId = runFlinkJob(jobParamsInfo, execMode);
+        List<String> logsInfo = new RunningLog().getRollingLogBaseInfo(jobParamsInfo, applicationId);
+        logsInfo.forEach(System.out::println);
     }
 }
