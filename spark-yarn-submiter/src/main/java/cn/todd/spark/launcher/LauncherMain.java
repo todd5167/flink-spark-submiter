@@ -18,11 +18,10 @@
 
 package cn.todd.spark.launcher;
 
+import cn.todd.common.utils.PublicUtil;
 import cn.todd.spark.client.YarnSubmitClient;
 import cn.todd.spark.entity.JobParamsInfo;
 import cn.todd.spark.utils.HdfsUtil;
-import cn.todd.spark.utils.PublicUtil;
-import cn.todd.spark.utils.TdStringUtil;
 import cn.todd.spark.utils.YarnConfLoaderUtil;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -38,7 +37,6 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.yarn.ClientArguments;
 
 import java.io.IOException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;

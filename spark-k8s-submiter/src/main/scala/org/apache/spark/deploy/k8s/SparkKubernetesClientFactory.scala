@@ -26,6 +26,7 @@ import okhttp3.Dispatcher
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.k8s.Config._
 import org.apache.spark.util.ThreadUtils
+import org.apache.spark.deploy.k8s.ExtendConfig._
 
 import scala.io.Source
 
@@ -90,12 +91,15 @@ private[spark] object SparkKubernetesClientFactory {
   }
 
 
-  def createKubernetesClient(sparkConf: SparkConf): KubernetesClient = {
-    val kubeConfig = sparkConf.get("spark.kubernetes.kubeConfig")
+  def createKubernetesClient(sparkConf: SparkConf, kubernetesConf: KubernetesConf[KubernetesDriverSpecificConf]): KubernetesClient = {
+    val kubeConfig = sparkConf.get(KUBERNETES_KUBE_CONFIG_KEY)
     val namespace =  sparkConf.get(KUBERNETES_NAMESPACE)
     val config = io.fabric8.kubernetes.client.Config.fromKubeconfig(getContentFromFile(kubeConfig))
 
     config.setNamespace(namespace)
+    // 回填 spark.master
+    val masterUrl = config.getMasterUrl
+    kubernetesConf.sparkConf.set("spark.master", s"k8s://${masterUrl}")
 
     val dispatcher = new Dispatcher(
       ThreadUtils.newDaemonCachedThreadPool("kubernetes-dispatcher"))

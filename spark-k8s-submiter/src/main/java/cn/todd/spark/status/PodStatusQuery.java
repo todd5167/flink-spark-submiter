@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package cn.todd.spark;
+package cn.todd.spark.status;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Config;

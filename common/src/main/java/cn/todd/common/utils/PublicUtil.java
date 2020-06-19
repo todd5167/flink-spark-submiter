@@ -1,4 +1,4 @@
-package cn.todd.spark.utils;
+package cn.todd.common.utils;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;

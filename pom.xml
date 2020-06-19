@@ -13,6 +13,7 @@
         <module>spark-k8s-submiter</module>
         <module>flink-yarn-submiter</module>
         <module>examples</module>
+        <module>common</module>
     </modules>
 
 
