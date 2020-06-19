@@ -1,59 +1,76 @@
- IDEA直接提交Flink/Spark任务到集群，方便调试。
+ IDEA直接提交Flink/Spark任务到集群，进行快速开发调试。任务提交代码稍加改造后可以和上层调度系统进行集成。
+ 
+ 
+ 任务类型提交入口类：
  
  [Spark-Yarn-Submit-Client](spark-yarn-submiter/src/main/java/cn/todd/spark/launcher/LauncherMain.java)
  
- [Spark-K8s-Submit-Client](spark-k8s-submiter/src/main/java/cn/todd/spark/LauncherMain.java)
+ [Spark-K8s-Submit-Client](spark-k8s-submiter/src/main/java/cn/todd/spark/launcher/LauncherMain.java)
  
  [Flink-Yarn-Submit-Client](flink-yarn-submiter/src/main/java/cn/todd/flink/launcher/LauncherMain.java)
  
  
- #### Flink任务提交示例
- 通过填写Flink任务执行时需要的参数信息，任务执行模式，以及集群文件本地即可进行任务提交。任务提交后，会返回任务执行使用的jm、tm日志基本信息，后期会做动态日志拉取，滚动获取日志。
+ 
+ 
+ 
+ #### Flink任务提交
+ - 需要填写Flink任务运行时参数配置，任务运行所在的集群配置路径，本地Flink根路径。项目依赖flink1.10版本。
+ - 支持以YarnSession、YarnPerjob、Standalone模式进行任务提交，返回ApplicationId。
+ - example模块下包含一个FlinkDemo，打包后会转移到项目的examplJars中，可以尝试进行任务提交。
+ - 任务提交后，根据ApplicationId获取任务执行使用的jm、tm日志基本信息，包含日志访问URL,日志总字节大小,根据日志基本信息可以做日志滚动展示，防止Yarn日志过大导致日志读取卡死。
+
+任务提交示例：
  ```
-        // 可执行jar包路径
-         String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
-         // 任务参数
-         String[] execArgs = new String[]{"-jobName", "flink110Submit", "--topic", "mqTest01", "--bootstrapServers", "172.16.8.107:9092"};
-         // 任务名称
-         String jobName = "Flink perjob submit";
-         // flink 文件夹路径
-         String flinkConfDir = "/Users/maqi/tmp/flink/flink-1.10.0/conf";
-         // flink lib包路径
-         String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
-         //  yarn 文件夹路径
-         //        String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
-         String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
-         //  作业依赖的外部文件，例如：udf jar , keytab
-         String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
-         // 任务提交队列
-         String queue = "root.users.hdfs";
-         // flink任务执行模式
-         String execMode = "yarnPerjob";
-         // yarnsession appid配置
-         Properties yarnSessionConfProperties = null;
-         // savepoint 及并行度相关
-         Properties confProperties = new Properties();
-         confProperties.setProperty("parallelism", "1");
+    // 可执行jar包路径
+     String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
+     // 任务参数
+     String[] execArgs = new String[]{"-jobName", "flink110Submit", "--topic", "mqTest01", "--bootstrapServers", "172.16.8.107:9092"};
+     // 任务名称
+     String jobName = "Flink perjob submit";
+     // flink 文件夹路径
+     String flinkConfDir = "/Users/maqi/tmp/flink/flink-1.10.0/conf";
+     // flink lib包路径
+     String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
+     //  yarn 文件夹路径
+     //        String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
+     String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
+     //  作业依赖的外部文件，例如：udf jar , keytab
+     String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
+     // 任务提交队列
+     String queue = "root.users.hdfs";
+     // flink任务执行模式
+     String execMode = "yarnPerjob";
+     // yarnsession appid配置
+     Properties yarnSessionConfProperties = null;
+     // savepoint 及并行度相关
+     Properties confProperties = new Properties();
+     confProperties.setProperty("parallelism", "1");
+
+   JobParamsInfo jobParamsInfo = JobParamsInfo.builder()
+             .setExecArgs(execArgs)
+             .setName(jobName)
+             .setRunJarPath(runJarPath)
+             .setDependFile(dependFile)
+             .setFlinkConfDir(flinkConfDir)
+             .setYarnConfDir(yarnConfDir)
+             .setConfProperties(confProperties)
+             .setYarnSessionConfProperties(yarnSessionConfProperties)
+             .setFlinkJarPath(flinkJarPath)
+             .setQueue(queue)
+             .build();
+
  
-       JobParamsInfo jobParamsInfo = JobParamsInfo.builder()
-                 .setExecArgs(execArgs)
-                 .setName(jobName)
-                 .setRunJarPath(runJarPath)
-                 .setDependFile(dependFile)
-                 .setFlinkConfDir(flinkConfDir)
-                 .setYarnConfDir(yarnConfDir)
-                 .setConfProperties(confProperties)
-                 .setYarnSessionConfProperties(yarnSessionConfProperties)
-                 .setFlinkJarPath(flinkJarPath)
-                 .setQueue(queue)
-                 .build();
- 
-      runFlinkJob(jobParamsInfo, execMode);
+    String applicationId = runFlinkJob(jobParamsInfo, execMode);
+    List<String> logsInfo = new RunningLog().getRollingLogBaseInfo(jobParamsInfo, applicationId);
+    logsInfo.forEach(System.out::println);
  ```
  
- #### Spark任务提交示例
- Spark on yarn与Flink任务提交类似，不过需要提前将Spark使用的类库上传到HDFS从而减少文件传输数量。任务提交时，会从yarnConfDir下查找集群使用的文件配置。
- 
+ #### Spark YARN任务提交
+- 填写用户程序包路径、执行参数、集群配置文件夹、安全认证等相关配置。
+- Spark任务提交使用Yarn cluster模式，使用的Spark Jar需要提前上传到HDFS并作为archive的参数。
+- 针对SparkSQL任务，通过提交examples中的spark-sql-proxy程序包来直接操作hive表。
+
+提交示例：
  ```
  public static void main(String[] args) throws Exception {
          boolean openKerberos = true;
@@ -100,3 +117,44 @@
          System.out.println(applicationId);
      }
  ```
+ 
+  #### Spark k8s 任务提交
+  
+  - 基于Spark2.4进行开发，通过将spark-sql-proxy.jar包打入镜像来执行Sparksql并操作Hive表。
+  - 操作Hive时需要传递hadoopConfDir,将hive-site.xml及hdfs-site.xml内容进行挂载。
+  - 通过读取kubeConfig配置文件进行Kuberclient的创建。
+  - 任务提交后立即返回spark-app-selector id,从而进行POD状态获取。
+  
+  ```aidl
+    public static void main(String[] args) throws Exception {
+        String appName = "todd spark submit";
+        // 镜像内的jar路径
+        String runJarPath = "local:///opt/dtstack/spark/spark-sql-proxy.jar";
+        String mainClass = "cn.todd.spark.SparksqlProxy";
+        String hadoopConfDir = "/Users/maqi/tmp/hadoopconf/dev40/hadoop";
+        String kubeConfig = "/Users/maqi/tmp/flink/flink-1.10.0/conf/k8s.config";
+        String imageName = "mqspark:2.4.8";
+        String execArgs = getExampleJobParams();
+
+        Properties confProperties = new Properties();
+        confProperties.setProperty("spark.executor.instances", "2");
+        confProperties.setProperty("spark.kubernetes.namespace", "default");
+        confProperties.setProperty("spark.kubernetes.authenticate.driver.serviceAccountName", "spark");
+        confProperties.setProperty("spark.kubernetes.container.image.pullPolicy", "IfNotPresent");
+
+
+        JobParamsInfo jobParamsInfo = JobParamsInfo.builder()
+                .setAppName(appName)
+                .setRunJarPath(runJarPath)
+                .setMainClass(mainClass)
+                .setExecArgs(execArgs)
+                .setConfProperties(confProperties)
+                .setHadoopConfDir(hadoopConfDir)
+                .setKubeConfig(kubeConfig)
+                .setImageName(imageName)
+                .build();
+
+        String id = run(jobParamsInfo);
+        System.out.println(id);
+    }
+```
