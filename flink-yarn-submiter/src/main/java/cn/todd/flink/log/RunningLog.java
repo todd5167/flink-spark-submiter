@@ -38,8 +38,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  *  Flink任务获取执行日志基本信息
@@ -51,6 +53,8 @@ public class RunningLog {
     private static final Logger LOG = LoggerFactory.getLogger(RunningLog.class);
 
     private static final String APPLICATION_REST_API_TMP = "%s/ws/v1/cluster/apps/%s";
+    private static final String CONTAINER_LOG_URL_TMP = "%s/node/containerlogs/%s/%s";
+    private static final String TASK_MANAGERS_KEY = "taskmanagers";
 
     public List<String> getRollingLogBaseInfo(JobParamsInfo jobParamsInfo, String applicatonId) throws Exception {
         ApplicationId applicationId = ConverterUtils.toApplicationId(applicatonId);
@@ -60,7 +64,6 @@ public class RunningLog {
         ApplicationReport report = yarnClient.getApplicationReport(applicationId);
 
         String rmUrl = StringUtils.substringBefore(report.getTrackingUrl().split("//")[1], "/");
-
         String amRootURl = String.format(APPLICATION_REST_API_TMP, UrlUtil.getHttpRootURL(rmUrl), applicatonId);
         List<String> result = Lists.newArrayList();
         try {
@@ -73,27 +76,19 @@ public class RunningLog {
                     return result;
                 }
 
-                //解析AM 日志基本信息
                 String amContainerLogsURL = applicationWSParser.getParamContent(ApplicationWSParser.AM_CONTAINER_LOGS_TAG);
-                String logPreURL = UrlUtil.getHttpRootURL(amContainerLogsURL);
-                String amLogInfo = applicationWSParser.parseContainerLogBaseInfo(amContainerLogsURL, logPreURL);
-
-                result.add(amLogInfo);
-
-
-                // 通过获取Flink任务包含的taskmanagers，拿到对应的Containerid
+                String user = applicationWSParser.getParamContent(ApplicationWSParser.AM_USER_TAG);
+                String containerLogUrlFormat = UrlUtil.formatUrlHost(amContainerLogsURL);
                 String trackingUrl = applicationWSParser.getParamContent(ApplicationWSParser.TRACKING_URL);
-                String taskManagerUrl = trackingUrl + "/taskmanagers";
-                List<String> containerIds = getContainersId(taskManagerUrl);
 
-                if (containerIds.size() > 0) {
-                    // 将amContainerLogs替换为taskManager对应的Containerid
-                    String[] split = amContainerLogsURL.split("/");
-                    String amContainerName = split[split.length - 2];
-
-                    List<String> collect = containerIds.stream()
-                            .map(tmContainerId -> StringUtils.replace(amContainerLogsURL, amContainerName, tmContainerId))
-                            .map(FunctionUtils.uncheckedFunction((containerUrl) -> applicationWSParser.parseContainerLogBaseInfo(containerUrl, logPreURL)))
+                // parse am log
+                parseAmLog(applicationWSParser, amContainerLogsURL).ifPresent(result::add);
+                // parse containers log
+                List<String[]> containersNameAndHost = getContainersNameAndHost(trackingUrl);
+                if (containersNameAndHost.size() > 0) {
+                    List<String> collect = containersNameAndHost.stream()
+                            .map(nameAndHost -> this.buildContainerLogUrl(containerLogUrlFormat, nameAndHost, user))
+                            .map(FunctionUtils.uncheckedFunction((containerLogUrl) -> applicationWSParser.parseContainerLogBaseInfo(containerLogUrl, UrlUtil.getHttpRootURL(containerLogUrl))))
                             .collect(Collectors.toList());
 
                     result.addAll(collect);
@@ -114,20 +109,57 @@ public class RunningLog {
         return yarnClient;
     }
 
-    private List<String> getContainersId(String taskManagerUrl) throws IOException {
-        List<String> containerIds = Lists.newArrayList();
-        try {
-            String taskmanagersInfo = HttpClientUtil.getRequest(taskManagerUrl);
-            JSONObject response = JSONObject.parseObject(taskmanagersInfo);
-            JSONArray taskmanagers = response.getJSONArray("taskmanagers");
+    private String buildContainerLogUrl(String containerHostPortFormat, String[] nameAndHost, String user) {
+        LOG.debug("buildContainerLogUrl name:{},host{},user{} ", nameAndHost[0], nameAndHost[1], user);
+        String containerUlrPre = String.format(containerHostPortFormat, nameAndHost[1]);
+        return String.format(CONTAINER_LOG_URL_TMP, containerUlrPre, nameAndHost[0], user);
+    }
 
-            containerIds = IntStream.range(0, taskmanagers.size())
-                    .mapToObj(taskmanagers::getJSONObject)
-                    .map(jsonObject -> (String) jsonObject.get("id"))
+    /**
+     *  parse am log
+     * @param applicationWSParser
+     * @return
+     */
+    public Optional<String> parseAmLog(ApplicationWSParser applicationWSParser, String amContainerLogsURL) {
+        try {
+            String logPreURL = UrlUtil.getHttpRootURL(amContainerLogsURL);
+            String amLogInfo = applicationWSParser.parseContainerLogBaseInfo(amContainerLogsURL, logPreURL);
+            return Optional.ofNullable(amLogInfo);
+        } catch (Exception e) {
+            LOG.error(" parse am Log error !", e);
+        }
+        return Optional.empty();
+    }
+
+    private List<String[]> getContainersNameAndHost(String trackingUrl) throws IOException {
+        List<String[]> containersNameAndHost = Lists.newArrayList();
+        try {
+            String taskManagerUrl = trackingUrl + "/" + TASK_MANAGERS_KEY;
+            String taskManagersInfo = HttpClientUtil.getRequest(taskManagerUrl);
+            JSONObject response = JSONObject.parseObject(taskManagersInfo);
+            JSONArray taskManagers = response.getJSONArray(TASK_MANAGERS_KEY);
+
+            containersNameAndHost = IntStream.range(0, taskManagers.size())
+                    .mapToObj(taskManagers::getJSONObject)
+                    .map(this::parseContainerNameAndHost)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            LOG.error("request taskmanagers error !", e);
+            LOG.error("request task managers error !", e);
         }
-        return containerIds;
+        return containersNameAndHost;
+    }
+
+    private String[] parseContainerNameAndHost(JSONObject jsonObject) {
+        String containerName = (String) jsonObject.get("id");
+        String akkaPath = (String) jsonObject.get("path");
+        String host = "";
+        try {
+            LOG.info("parse akkaPath: {}", akkaPath);
+            String[] split = akkaPath.split("@");
+            host = split[1].split(":")[0];
+        } catch (Exception e) {
+            LOG.error("parseContainersHost error ", e);
+        }
+        return new String[]{containerName, host};
     }
 }

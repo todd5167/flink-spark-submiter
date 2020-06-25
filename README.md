@@ -11,8 +11,6 @@
  
  
  
- 
- 
  #### Flink任务提交
  - 需要填写Flink任务运行时参数配置，任务运行所在的集群配置路径，本地Flink根路径。项目依赖flink1.10版本。
  - 支持以YarnSession、YarnPerjob、Standalone模式进行任务提交，返回ApplicationId。
@@ -120,9 +118,9 @@
  
   #### Spark k8s 任务提交
   
-  - 基于Spark2.4进行开发，通过将spark-sql-proxy.jar包打入镜像来执行Sparksql并操作Hive表。
-  - 操作Hive时需要传递hadoopConfDir,将hive-site.xml及hdfs-site.xml内容进行挂载。
-  - 通过读取kubeConfig配置文件进行Kuberclient的创建。
+  - 基于Spark2.4.4进行开发，通过将spark-sql-proxy.jar包打入镜像来执行Sparksql并操作Hive表，无其他特殊操作。
+  - 操作Hive时需要传递hadoopConfDir,程序会自动将.xml文件内容进行挂载，如果非root用户操作Hive,需要设置HADOOP_USER_NAME。
+  - 通过读取kubeConfig配置文件进行Kuberclient的创建,而非官方提供的master url方式。
   - 任务提交后立即返回spark-app-selector id,从而进行POD状态获取。
   
   ```aidl

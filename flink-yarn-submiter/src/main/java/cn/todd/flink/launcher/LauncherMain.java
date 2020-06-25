@@ -99,6 +99,8 @@ public class LauncherMain {
                 .build();
 
         String applicationId = runFlinkJob(jobParamsInfo, execMode);
+
+        Thread.sleep(20000);
         List<String> logsInfo = new RunningLog().getRollingLogBaseInfo(jobParamsInfo, applicationId);
         logsInfo.forEach(System.out::println);
     }

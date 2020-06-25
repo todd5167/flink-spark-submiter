@@ -23,6 +23,7 @@ public class ApplicationWSParser {
     public static final String AM_ROOT_TAG = "app";
     public static final String AM_STATUE = "state";
     public static final String AM_CONTAINER_LOGS_TAG = "amContainerLogs";
+    public static final String AM_USER_TAG = "user";
     public static final String TRACKING_URL = "trackingUrl";
 
     private static final Pattern ERR_INFO_BYTE_PATTERN = Pattern.compile("(?<name>[^:]+):+\\s+[a-zA-Z\\s]+(\\d+)\\s*bytes");

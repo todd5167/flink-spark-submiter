@@ -23,4 +23,6 @@ private[spark] object ExtendConfig {
   // kubeConfig 文件路径
   val KUBERNETES_KUBE_CONFIG_KEY = "spark.kubernetes.kubeConfig"
 
+  val HADOOP_USER_NAME_KEY = "HADOOP_USER_NAME"
+
 }

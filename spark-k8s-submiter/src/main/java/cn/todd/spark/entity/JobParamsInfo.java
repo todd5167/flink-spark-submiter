@@ -49,12 +49,14 @@ public class JobParamsInfo {
     /** 拉取的镜像名称 **/
     private String imageName;
 
+    /** 操作hdfs指定的HADOOP_USER_NAME **/
+    private String hadoopUserName;
+
     /**  spark 相关参数配置 **/
     private Properties confProperties;
 
-
     private JobParamsInfo(String appName, String mainClass, String runJarPath, String execArgs, String hadoopConfDir,
-                          String kubeConfig, Properties confProperties, String imageName) {
+                          String kubeConfig, Properties confProperties, String imageName, String hadoopUserName) {
         this.appName = appName;
         this.mainClass = mainClass;
         this.runJarPath = runJarPath;
@@ -64,6 +66,7 @@ public class JobParamsInfo {
         this.kubeConfig = kubeConfig;
         this.confProperties = confProperties;
         this.imageName = imageName;
+        this.hadoopUserName = hadoopUserName;
     }
 
     public String getAppName() {
@@ -98,6 +101,10 @@ public class JobParamsInfo {
         return imageName;
     }
 
+    public String getHadoopUserName() {
+        return hadoopUserName;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -111,6 +118,7 @@ public class JobParamsInfo {
         private String hadoopConfDir;
         private String kubeConfig;
         private String imageName;
+        private String hadoopUserName;
         private Properties confProperties;
 
 
@@ -154,8 +162,14 @@ public class JobParamsInfo {
             return this;
         }
 
+        public Builder setHadoopUserName(String hadoopUserName) {
+            this.hadoopUserName = hadoopUserName;
+            return this;
+        }
+
         public JobParamsInfo build() {
-            return new JobParamsInfo(appName, mainClass, runJarPath, execArgs, hadoopConfDir, kubeConfig, confProperties,imageName);
+            return new JobParamsInfo(appName, mainClass, runJarPath, execArgs, hadoopConfDir, kubeConfig,
+                    confProperties, imageName, hadoopUserName);
         }
     }
 

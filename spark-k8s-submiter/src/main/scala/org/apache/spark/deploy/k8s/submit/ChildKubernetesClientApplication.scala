@@ -26,7 +26,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkApplication
 import org.apache.spark.deploy.k8s.Config._
 import org.apache.spark.deploy.k8s.Constants._
-import org.apache.spark.deploy.k8s.{KubernetesConf, KubernetesDriverSpecificConf, SparkKubernetesClientFactory}
+import org.apache.spark.deploy.k8s.{ExtendConfig, KubernetesConf, KubernetesDriverSpecificConf, SparkKubernetesClientFactory}
 import org.apache.spark.internal.Logging
 import org.apache.spark.util.Utils
 import org.apache.spark.deploy.k8s.ExtendConfig._
@@ -112,12 +112,18 @@ private[spark] class Client(
     val resolvedDriverSpec = builder.buildFromFeatures(kubernetesConf)
     val configMapName = s"$kubernetesResourceNamePrefix-driver-conf-map"
     val configMap = buildConfigMap(configMapName, resolvedDriverSpec.systemProperties)
+    val hadoopUserName = resolvedDriverSpec.systemProperties.get(ExtendConfig.HADOOP_USER_NAME_KEY).get
+
     // The include of the ENV_VAR for "SPARK_CONF_DIR" is to allow for the
     // Spark command builder to pickup on the Java Options present in the ConfigMap
     val resolvedDriverContainer = new ContainerBuilder(resolvedDriverSpec.pod.container)
       .addNewEnv()
       .withName(ENV_SPARK_CONF_DIR)
       .withValue(SPARK_CONF_DIR_INTERNAL)
+      .endEnv()
+      .addNewEnv()
+      .withName(ExtendConfig.HADOOP_USER_NAME_KEY)
+      .withValue(hadoopUserName)
       .endEnv()
       .addNewVolumeMount()
       .withName(SPARK_CONF_VOLUME)

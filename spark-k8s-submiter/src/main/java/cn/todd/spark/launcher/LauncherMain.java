@@ -22,6 +22,7 @@ import cn.todd.common.utils.HadoopConfParseUtil;
 import cn.todd.common.utils.PublicUtil;
 import cn.todd.spark.entity.JobParamsInfo;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.SparkConf;
@@ -66,9 +67,7 @@ public class LauncherMain {
         sparkConf.set("spark.kubernetes.container.image", jobParamsInfo.getImageName());
         sparkConf.set("spark.kubernetes.submission.waitAppCompletion", "false");
 
-        String hadoopConfDir = jobParamsInfo.getHadoopConfDir();
-        Optional.ofNullable(hadoopConfDir)
-                .ifPresent((confDir) -> HadoopConfParseUtil.getHadoopConf(confDir).forEach(sparkConf::set));
+        setHadoopConfig(jobParamsInfo, sparkConf);
 
         Properties confProperties = jobParamsInfo.getConfProperties();
         confProperties.
@@ -78,6 +77,26 @@ public class LauncherMain {
                 .forEach(name -> sparkConf.set(name, confProperties.getProperty(name)));
 
         return sparkConf;
+    }
+
+    /**
+     * 1. 将hdfs,hive相关配置文件通过configMap挂载到镜像的conf文件夹
+     * 2. 分别设置driver ,executor环境变量下的HADOOP_USER_NAME
+     *
+     * @param jobParamsInfo
+     * @param sparkConf
+     */
+    public static void setHadoopConfig(JobParamsInfo jobParamsInfo, SparkConf sparkConf) {
+        String hadoopConfDir = jobParamsInfo.getHadoopConfDir();
+        Optional.ofNullable(hadoopConfDir)
+                .ifPresent((confDir) -> HadoopConfParseUtil.getHadoopConf(confDir).forEach(sparkConf::set));
+
+        if (!Strings.isNullOrEmpty(jobParamsInfo.getHadoopUserName())) {
+            // driver use
+            sparkConf.set(ExtendConfig.HADOOP_USER_NAME_KEY(), jobParamsInfo.getHadoopUserName());
+            // executor use
+            sparkConf.set("spark.executorEnv.HADOOP_USER_NAME", jobParamsInfo.getHadoopUserName());
+        }
     }
 
     /**
@@ -117,6 +136,7 @@ public class LauncherMain {
         String hadoopConfDir = "/Users/maqi/tmp/hadoopconf/dev40/hadoop";
         String kubeConfig = "/Users/maqi/tmp/flink/flink-1.10.0/conf/k8s.config";
         String imageName = "mqspark:2.4.8";
+        String hdpUserName = "admin";
         String execArgs = getExampleJobParams();
 
         Properties confProperties = new Properties();
@@ -133,12 +153,14 @@ public class LauncherMain {
                 .setExecArgs(execArgs)
                 .setConfProperties(confProperties)
                 .setHadoopConfDir(hadoopConfDir)
+                .setHadoopUserName(hdpUserName)
                 .setKubeConfig(kubeConfig)
                 .setImageName(imageName)
                 .build();
 
-        String id = run(jobParamsInfo);
-        System.out.println(id);
+        String sparkAppSelectorId = run(jobParamsInfo);
+
+        System.out.println(sparkAppSelectorId);
     }
 
 
