@@ -134,8 +134,8 @@ public class LauncherMain {
         String runJarPath = "local:///opt/dtstack/spark/spark-sql-proxy.jar";
         String mainClass = "cn.todd.spark.SparksqlProxy";
         String hadoopConfDir = "/Users/maqi/tmp/hadoopconf/dev40/hadoop";
-        String kubeConfig = "/Users/maqi/tmp/flink/flink-1.10.0/conf/k8s.config";
-        String imageName = "mqspark:2.4.8";
+        String kubeConfig = "/Users/maqi/tmp/conf/k8s.config";
+        String imageName = "mqspark:2.4.4";
         String hdpUserName = "admin";
         String execArgs = getExampleJobParams();
 

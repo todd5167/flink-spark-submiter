@@ -71,7 +71,6 @@ public class LauncherMain {
         // flink lib包路径
         String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
         //  yarn 文件夹路径
-        //        String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
         String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
         //  作业依赖的外部文件，例如：udf jar , keytab
         String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};

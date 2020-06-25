@@ -11,7 +11,7 @@
  
  
  
- #### Flink任务提交
+ #### Flink 多执行模式任务提交
  - 需要填写Flink任务运行时参数配置，任务运行所在的集群配置路径，本地Flink根路径。项目依赖flink1.10版本。
  - 支持以YarnSession、YarnPerjob、Standalone模式进行任务提交，返回ApplicationId。
  - example模块下包含一个FlinkDemo，打包后会转移到项目的examplJars中，可以尝试进行任务提交。
@@ -30,8 +30,8 @@
      // flink lib包路径
      String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
      //  yarn 文件夹路径
-     //        String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
-     String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
+     //        String yarnConfDir = "/Users/maqi/tmp/hadoopconf";
+     String yarnConfDir = "/Users/maqi/tmp/hadoopconf";
      //  作业依赖的外部文件，例如：udf jar , keytab
      String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
      // 任务提交队列
@@ -63,21 +63,21 @@
     logsInfo.forEach(System.out::println);
  ```
  
- #### Spark YARN任务提交
+ #### Spark on yarn 任务提交
 - 填写用户程序包路径、执行参数、集群配置文件夹、安全认证等相关配置。
 - Spark任务提交使用Yarn cluster模式，使用的Spark Jar需要提前上传到HDFS并作为archive的参数。
 - 针对SparkSQL任务，通过提交examples中的spark-sql-proxy程序包来直接操作hive表。
 
 提交示例：
- ```
+ ```aidl
  public static void main(String[] args) throws Exception {
          boolean openKerberos = true;
          String appName = "todd spark submit";
          String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/spark-sql-proxy/spark-sql-proxy.jar";
          String mainClass = "cn.todd.spark.SparksqlProxy";
-         String yarnConfDir = "/Users/maqi/tmp/__spark_conf__6181052549606078780";
+         String yarnConfDir = "/Users/maqi/tmp/hadoopconf";
          String principal = "hdfs/node1@DTSTACK.COM";
-         String keyTab = "/Users/maqi/tmp/hadoopconf/cdh514/hdfs.keytab";
+         String keyTab = "/Users/maqi/tmp/hadoopconf/hdfs.keytab";
          String jarHdfsDir = "sparkproxy2";
          String archive = "hdfs://nameservice1/sparkjars/jars";
          String queue = "root.users.hdfs";
@@ -116,7 +116,7 @@
      }
  ```
  
-  #### Spark k8s 任务提交
+  #### Spark on k8s 任务提交
   
   - 基于Spark2.4.4进行开发，通过将spark-sql-proxy.jar包打入镜像来执行Sparksql并操作Hive表，无其他特殊操作。
   - 操作Hive时需要传递hadoopConfDir,程序会自动将.xml文件内容进行挂载，如果非root用户操作Hive,需要设置HADOOP_USER_NAME。
@@ -129,9 +129,9 @@
         // 镜像内的jar路径
         String runJarPath = "local:///opt/dtstack/spark/spark-sql-proxy.jar";
         String mainClass = "cn.todd.spark.SparksqlProxy";
-        String hadoopConfDir = "/Users/maqi/tmp/hadoopconf/dev40/hadoop";
-        String kubeConfig = "/Users/maqi/tmp/flink/flink-1.10.0/conf/k8s.config";
-        String imageName = "mqspark:2.4.8";
+        String hadoopConfDir = "/Users/maqi/tmp/hadoopconf/";
+        String kubeConfig = "/Users/maqi/tmp/conf/k8s.config";
+        String imageName = "mqspark:2.4.4";
         String execArgs = getExampleJobParams();
 
         Properties confProperties = new Properties();
