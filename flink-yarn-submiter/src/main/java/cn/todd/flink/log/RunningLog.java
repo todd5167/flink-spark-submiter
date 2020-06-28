@@ -155,8 +155,7 @@ public class RunningLog {
         String host = "";
         try {
             LOG.info("parse akkaPath: {}", akkaPath);
-            String[] split = akkaPath.split("@");
-            host = split[1].split(":")[0];
+            host = akkaPath.split("[@:]")[2];
         } catch (Exception e) {
             LOG.error("parseContainersHost error ", e);
         }
