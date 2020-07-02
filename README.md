@@ -63,6 +63,57 @@
     logsInfo.forEach(System.out::println);
  ```
  
+jobmanager日志格式:
+   
+ ```aidl
+{
+    "logs":[
+        {
+            "name":"taskmanager.err ",
+            "totalBytes":"560",
+            "url":"http://node03:8042/node/containerlogs/container_e27_1593571725037_0170_01_000002/admin/taskmanager.err/"
+        },
+        {
+            "name":"taskmanager.log ",
+            "totalBytes":"35937",
+            "url":"http://node03:8042/node/containerlogs/container_e27_1593571725037_0170_01_000002/admin/taskmanager.log/"
+        },
+        {
+            "name":"taskmanager.out ",
+            "totalBytes":"0",
+            "url":"http://node03:8042/node/containerlogs/container_e27_1593571725037_0170_01_000002/admin/taskmanager.out/"
+        }
+    ],
+    "otherInfo":"{"dataPort":36218,"freeSlots":0,"hardware":{"cpuCores":4,"freeMemory":241172480,"managedMemory":308700779,"physicalMemory":8201641984},"id":"container_e27_1593571725037_0170_01_000002","path":"akka.tcp://flink@node03:36791/user/taskmanager_0","slotsNumber":1,"timeSinceLastHeartbeat":1593659561129}",
+    "typeName":"taskmanager"
+}
+```
+
+taskmanager日志格式:
+```aidl
+{
+    "logs":[
+        {
+            "name":"taskmanager.err ",
+            "totalBytes":"560",
+            "url":"http://node03:8042/node/containerlogs/container_e27_1593571725037_0170_01_000002/admin/taskmanager.err/"
+        },
+        {
+            "name":"taskmanager.log ",
+            "totalBytes":"35937",
+            "url":"http://node03:8042/node/containerlogs/container_e27_1593571725037_0170_01_000002/admin/taskmanager.log/"
+        },
+        {
+            "name":"taskmanager.out ",
+            "totalBytes":"0",
+            "url":"http://node03:8042/node/containerlogs/container_e27_1593571725037_0170_01_000002/admin/taskmanager.out/"
+        }
+    ],
+    "otherInfo":"{"dataPort":36218,"freeSlots":0,"hardware":{"cpuCores":4,"freeMemory":241172480,"managedMemory":308700779,"physicalMemory":8201641984},"id":"container_e27_1593571725037_0170_01_000002","path":"akka.tcp://flink@node03:36791/user/taskmanager_0","slotsNumber":1,"timeSinceLastHeartbeat":1593659561129}",
+    "typeName":"taskmanager"
+}
+```
+ 
  #### Spark on yarn 任务提交
 - 填写用户程序包路径、执行参数、集群配置文件夹、安全认证等相关配置。
 - Spark任务提交使用Yarn cluster模式，使用的Spark Jar需要提前上传到HDFS并作为archive的参数。
