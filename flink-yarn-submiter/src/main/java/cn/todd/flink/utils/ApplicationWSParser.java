@@ -41,7 +41,7 @@ public class ApplicationWSParser {
     }
 
 
-    public String parseContainerLogBaseInfo(String containerLogsURL, String preURL) throws IOException {
+    public RollingBaseInfo parseContainerLogBaseInfo(String containerLogsURL, String preURL) throws IOException {
         String amContainerPreViewHttp = HttpClientUtil.getRequest(containerLogsURL);
         org.jsoup.nodes.Document document = Jsoup.parse(amContainerPreViewHttp);
         Elements el = document.getElementsByClass("content");
@@ -79,7 +79,7 @@ public class ApplicationWSParser {
 
             rollingBaseInfo.addLogBaseInfo(new LogBaseInfo(logName, logURL, infoTotalBytes));
         }
-        return JSONObject.toJSONString(rollingBaseInfo);
+        return rollingBaseInfo;
     }
 
     public class LogBaseInfo {
@@ -134,6 +134,7 @@ public class ApplicationWSParser {
     public class RollingBaseInfo {
         String typeName;
         List<LogBaseInfo> logs = Lists.newArrayList();
+        String otherInfo;
 
         public RollingBaseInfo() {
 
@@ -162,6 +163,14 @@ public class ApplicationWSParser {
 
         public void setLogs(List<LogBaseInfo> logs) {
             this.logs = logs;
+        }
+
+        public String getOtherInfo() {
+            return otherInfo;
+        }
+
+        public void setOtherInfo(String otherInfo) {
+            this.otherInfo = otherInfo;
         }
     }
 }

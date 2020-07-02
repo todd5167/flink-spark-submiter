@@ -58,7 +58,7 @@ public class LauncherMain {
 
     public static void main(String[] args) throws Exception {
 
-        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
+//        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
 
         // 可执行jar包路径
         String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
@@ -75,7 +75,7 @@ public class LauncherMain {
         //  作业依赖的外部文件，例如：udf jar , keytab
         String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
         // 任务提交队列
-        String queue = "root.users.hdfs";
+        String queue = "c";
         // flink任务执行模式
         String execMode = "yarnPerjob";
         // yarnsession appid配置

@@ -19,6 +19,7 @@
 package cn.todd.flink.log;
 
 import cn.todd.flink.entity.JobParamsInfo;
+import cn.todd.flink.entity.TaskmanagerInfo;
 import cn.todd.flink.factory.YarnClusterClientFactory;
 import cn.todd.flink.utils.ApplicationWSParser;
 import cn.todd.flink.utils.HttpClientUtil;
@@ -27,7 +28,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.flink.util.function.FunctionUtils;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.client.api.YarnClient;
@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  *  Flink任务获取执行日志基本信息
@@ -84,15 +83,8 @@ public class RunningLog {
                 // parse am log
                 parseAmLog(applicationWSParser, amContainerLogsURL).ifPresent(result::add);
                 // parse containers log
-                List<String[]> containersNameAndHost = getContainersNameAndHost(trackingUrl);
-                if (containersNameAndHost.size() > 0) {
-                    List<String> collect = containersNameAndHost.stream()
-                            .map(nameAndHost -> this.buildContainerLogUrl(containerLogUrlFormat, nameAndHost, user))
-                            .map(FunctionUtils.uncheckedFunction((containerLogUrl) -> applicationWSParser.parseContainerLogBaseInfo(containerLogUrl, UrlUtil.getHttpRootURL(containerLogUrl))))
-                            .collect(Collectors.toList());
-
-                    result.addAll(collect);
-                }
+                List<String> containersLogs = parseContainersLog(applicationWSParser, user, containerLogUrlFormat, trackingUrl);
+                result.addAll(containersLogs);
             }
         } catch (Exception e) {
             LOG.error("getRollingLogBaseInfo error :", e);
@@ -123,16 +115,29 @@ public class RunningLog {
     public Optional<String> parseAmLog(ApplicationWSParser applicationWSParser, String amContainerLogsURL) {
         try {
             String logPreURL = UrlUtil.getHttpRootURL(amContainerLogsURL);
-            String amLogInfo = applicationWSParser.parseContainerLogBaseInfo(amContainerLogsURL, logPreURL);
-            return Optional.ofNullable(amLogInfo);
+            ApplicationWSParser.RollingBaseInfo amLogInfo = applicationWSParser.parseContainerLogBaseInfo(amContainerLogsURL, logPreURL);
+            return Optional.ofNullable(JSONObject.toJSONString(amLogInfo));
         } catch (Exception e) {
             LOG.error(" parse am Log error !", e);
         }
         return Optional.empty();
     }
 
-    private List<String[]> getContainersNameAndHost(String trackingUrl) throws IOException {
-        List<String[]> containersNameAndHost = Lists.newArrayList();
+    private List<String> parseContainersLog(ApplicationWSParser applicationWSParser, String user, String containerLogUrlFormat, String trackingUrl) throws IOException {
+        List<String> taskmanagerInfoStr = Lists.newArrayList();
+        List<TaskmanagerInfo> taskmanagerInfos = getContainersNameAndHost(trackingUrl);
+        for (TaskmanagerInfo info : taskmanagerInfos) {
+            String[] nameAndHost = parseContainerNameAndHost(info);
+            String containerLogUrl = buildContainerLogUrl(containerLogUrlFormat, nameAndHost, user);
+            ApplicationWSParser.RollingBaseInfo rollingBaseInfo = applicationWSParser.parseContainerLogBaseInfo(containerLogUrl, UrlUtil.getHttpRootURL(containerLogUrl));
+            rollingBaseInfo.setOtherInfo(JSONObject.toJSONString(info));
+            taskmanagerInfoStr.add(JSONObject.toJSONString(rollingBaseInfo));
+        }
+        return taskmanagerInfoStr;
+    }
+
+    private List<TaskmanagerInfo> getContainersNameAndHost(String trackingUrl) throws IOException {
+        List<TaskmanagerInfo> containersNameAndHost = Lists.newArrayList();
         try {
             String taskManagerUrl = trackingUrl + "/" + TASK_MANAGERS_KEY;
             String taskManagersInfo = HttpClientUtil.getRequest(taskManagerUrl);
@@ -141,7 +146,7 @@ public class RunningLog {
 
             containersNameAndHost = IntStream.range(0, taskManagers.size())
                     .mapToObj(taskManagers::getJSONObject)
-                    .map(this::parseContainerNameAndHost)
+                    .map(jsonObject -> JSONObject.toJavaObject(jsonObject, TaskmanagerInfo.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
             LOG.error("request task managers error !", e);
@@ -149,9 +154,9 @@ public class RunningLog {
         return containersNameAndHost;
     }
 
-    private String[] parseContainerNameAndHost(JSONObject jsonObject) {
-        String containerName = (String) jsonObject.get("id");
-        String akkaPath = (String) jsonObject.get("path");
+    private String[] parseContainerNameAndHost(TaskmanagerInfo taskmanagerInfo) {
+        String containerName = taskmanagerInfo.getId();
+        String akkaPath = taskmanagerInfo.getPath();
         String host = "";
         try {
             LOG.info("parse akkaPath: {}", akkaPath);
