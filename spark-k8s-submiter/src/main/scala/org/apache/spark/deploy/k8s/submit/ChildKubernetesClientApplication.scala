@@ -113,6 +113,7 @@ private[spark] class Client(
     val configMapName = s"$kubernetesResourceNamePrefix-driver-conf-map"
     val configMap = buildConfigMap(configMapName, resolvedDriverSpec.systemProperties)
     val hadoopUserName = resolvedDriverSpec.systemProperties.get(ExtendConfig.HADOOP_USER_NAME_KEY).get
+    val sftpConfig = builderSftpConfig(resolvedDriverSpec.systemProperties)
 
     // The include of the ENV_VAR for "SPARK_CONF_DIR" is to allow for the
     // Spark command builder to pickup on the Java Options present in the ConfigMap
@@ -125,6 +126,7 @@ private[spark] class Client(
       .withName(ExtendConfig.HADOOP_USER_NAME_KEY)
       .withValue(hadoopUserName)
       .endEnv()
+      .addAllToEnv(sftpConfig)
       .addNewVolumeMount()
       .withName(SPARK_CONF_VOLUME)
       .withMountPath(SPARK_CONF_DIR_INTERNAL)
@@ -169,6 +171,13 @@ private[spark] class Client(
       }
 
     }
+  }
+
+  private def builderSftpConfig(conf: Map[String, String]): util.ArrayList[EnvVar] = {
+    val sftpConf = new util.ArrayList[EnvVar]()
+    conf.filterKeys(key => key.contains("sftp"))
+      .foreach { case (k, v) => sftpConf.add(new EnvVar(k, v, null)) }
+    sftpConf
   }
 
   // Add a OwnerReference to the given resources making the driver pod an owner of them so when

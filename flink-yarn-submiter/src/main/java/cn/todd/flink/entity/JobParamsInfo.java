@@ -31,6 +31,7 @@ public class JobParamsInfo {
 
     private String name;
     private String queue;
+    private String runMode;
     private String runJarPath;
     private String flinkConfDir;
     private String flinkJarPath;
@@ -42,7 +43,7 @@ public class JobParamsInfo {
 
     private JobParamsInfo(String name, String queue, String runJarPath, String flinkConfDir, String yarnConfDir,
                           String[] execArgs, Properties confProperties, Properties yarnSessionConfProperties,
-                          String[] dependFile, String flinkJarPath) {
+                          String[] dependFile, String flinkJarPath, String runMode) {
         this.name = name;
         this.queue = queue;
         this.runJarPath = runJarPath;
@@ -53,6 +54,7 @@ public class JobParamsInfo {
         this.yarnSessionConfProperties = yarnSessionConfProperties;
         this.dependFile = dependFile;
         this.flinkJarPath = flinkJarPath;
+        this.runMode = runMode;
     }
 
     public String getName() {
@@ -100,10 +102,14 @@ public class JobParamsInfo {
         return new JobParamsInfo.Builder();
     }
 
+    public String getRunMode() {
+        return runMode;
+    }
 
     public static class Builder {
         private String name;
         private String queue;
+        private String runMode;
         private String runJarPath;
         private String flinkConfDir;
         private String flinkJarPath;
@@ -164,9 +170,14 @@ public class JobParamsInfo {
             return this;
         }
 
+        public JobParamsInfo.Builder setRunMode(String runMode) {
+            this.runMode = runMode;
+            return this;
+        }
+
         public JobParamsInfo build() {
             return new JobParamsInfo(name, queue, runJarPath, flinkConfDir, yarnConfDir, execArgs,
-                    confProperties, yarnSessionConfProperties, dependFile, flinkJarPath);
+                    confProperties, yarnSessionConfProperties, dependFile, flinkJarPath, runMode);
         }
     }
 

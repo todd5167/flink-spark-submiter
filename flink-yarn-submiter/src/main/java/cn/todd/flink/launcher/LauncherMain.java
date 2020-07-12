@@ -20,12 +20,17 @@
 package cn.todd.flink.launcher;
 
 import cn.todd.flink.entity.JobParamsInfo;
+import cn.todd.flink.enums.ERunMode;
 import cn.todd.flink.executor.StandaloneExecutor;
 import cn.todd.flink.executor.YarnJobClusterExecutor;
 import cn.todd.flink.executor.YarnSessionClusterExecutor;
 import cn.todd.flink.log.RunningLog;
+import org.apache.commons.math3.util.Pair;
+import org.apache.flink.util.Preconditions;
+import org.apache.flink.util.function.FunctionUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -38,28 +43,59 @@ import java.util.Properties;
 
 public class LauncherMain {
 
-    public static String runFlinkJob(JobParamsInfo jobParamsInfo, String execMode) throws Exception {
-        String yarnApplicationId = "";
-        switch (execMode) {
-            case "yarnSession":
-                yarnApplicationId = new YarnSessionClusterExecutor(jobParamsInfo).exec();
+    public static Optional<Pair<String, String>> submitFlinkJob(JobParamsInfo jobParamsInfo) throws Exception {
+        Optional<Pair<String, String>> appIdAndJobId = Optional.empty();
+        ERunMode runMode = ERunMode.convertFromString(jobParamsInfo.getRunMode());
+        switch (runMode) {
+            case YARN_SESSION:
+                appIdAndJobId = new YarnSessionClusterExecutor(jobParamsInfo).exec();
                 break;
-            case "yarnPerjob":
-                yarnApplicationId = new YarnJobClusterExecutor(jobParamsInfo).exec();
+            case YARN_PERJOB:
+                appIdAndJobId = new YarnJobClusterExecutor(jobParamsInfo).exec();
                 break;
-            case "standalone":
+            case STANDALONE:
                 new StandaloneExecutor(jobParamsInfo).exec();
+                break;
+            default:
+                throw new RuntimeException("Unsupported operating mode, support YARN_SESSION,YARN_SESSION,STANDALONE");
+        }
+        return appIdAndJobId;
+    }
+
+    public static void cancelFlinkJob(JobParamsInfo jobParamsInfo, Pair<String, String> appIdAndJobId) throws Exception {
+        String yarnApplicationId = appIdAndJobId.getFirst();
+        String jobId = appIdAndJobId.getSecond();
+
+        Preconditions.checkNotNull(yarnApplicationId, "application id not null!");
+        Preconditions.checkNotNull(jobId, "job  id not null!");
+
+        ERunMode runMode = ERunMode.convertFromString(jobParamsInfo.getRunMode());
+        switch (runMode) {
+            case YARN_SESSION:
+                new YarnSessionClusterExecutor(jobParamsInfo).cancel(yarnApplicationId, jobId);
+                break;
+            case YARN_PERJOB:
+                new YarnJobClusterExecutor(jobParamsInfo).cancel(yarnApplicationId, jobId);
                 break;
             default:
                 throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
         }
-        return yarnApplicationId;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void printRollingLogBaseInfo(JobParamsInfo jobParamsInfo, Pair<String, String> appIdAndJobId) {
+        try {
+            //获取运行日志
+            Thread.sleep(20000);
+            List<String> logsInfo = new RunningLog().getRollingLogBaseInfo(jobParamsInfo, appIdAndJobId.getFirst());
+            logsInfo.forEach(System.out::println);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-//        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
+    public static JobParamsInfo buildJobParamsInfo() {
 
+        //        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
         // 可执行jar包路径
         String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
         // 任务参数
@@ -72,12 +108,12 @@ public class LauncherMain {
         String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
         //  yarn 文件夹路径
         String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
-        //  作业依赖的外部文件，例如：udf jar , keytab
+        // perjob 运行流任务
+        String runMode = "yarn_perjob";
+        //  作业依赖的外部文件
         String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
         // 任务提交队列
         String queue = "c";
-        // flink任务执行模式
-        String execMode = "yarnPerjob";
         // yarnsession appid配置
         Properties yarnSessionConfProperties = null;
         // savepoint 及并行度相关
@@ -95,12 +131,23 @@ public class LauncherMain {
                 .setYarnSessionConfProperties(yarnSessionConfProperties)
                 .setFlinkJarPath(flinkJarPath)
                 .setQueue(queue)
+                .setRunMode(runMode)
                 .build();
 
-        String applicationId = runFlinkJob(jobParamsInfo, execMode);
+        return jobParamsInfo;
+    }
 
-        Thread.sleep(20000);
-        List<String> logsInfo = new RunningLog().getRollingLogBaseInfo(jobParamsInfo, applicationId);
-        logsInfo.forEach(System.out::println);
+
+    public static void main(String[] args) throws Exception {
+        JobParamsInfo jobParamsInfo = buildJobParamsInfo();
+        Optional<Pair<String, String>> appIdAndJobId = submitFlinkJob(jobParamsInfo);
+        // log info
+        appIdAndJobId.ifPresent((pair) -> printRollingLogBaseInfo(jobParamsInfo, pair));
+
+        // cancel job
+//        Pair<String, String> job = new Pair<>("application_1594265598097_2688", "35a679c9f94311a8a8084e4d8d06a95d");
+//        cancelFlinkJob(jobParamsInfo, job);
+
+
     }
 }

@@ -23,6 +23,7 @@ import cn.todd.flink.factory.YarnClusterClientFactory;
 import cn.todd.flink.utils.JobGraphBuildUtil;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.client.program.ClusterClientProvider;
 import org.apache.flink.configuration.Configuration;
@@ -47,22 +48,20 @@ import java.util.Optional;
  * @author todd5167
  */
 
-public class YarnJobClusterExecutor {
+public class YarnJobClusterExecutor extends AbstractClusterExecutor{
     private static final Logger LOG = LoggerFactory.getLogger(YarnJobClusterExecutor.class);
 
     private static final String CONFIG_FILE_LOGBACK_NAME = "logback.xml";
     private static final String CONFIG_FILE_LOG4J_NAME = "log4j.properties";
     private static final String DEFAULT_TOTAL_PROCESS_MEMORY = "1024m";
 
-    JobParamsInfo jobParamsInfo;
-
     public YarnJobClusterExecutor(JobParamsInfo jobParamsInfo) {
-        this.jobParamsInfo = jobParamsInfo;
+        super(jobParamsInfo);
     }
 
-    public String exec() throws Exception {
+    @Override
+    public Optional<Pair<String, String>> exec() throws Exception {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
-
         Optional.ofNullable(jobParamsInfo.getDependFile())
                 .ifPresent(files -> JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, files));
 
@@ -79,11 +78,11 @@ public class YarnJobClusterExecutor {
         ClusterClientProvider<ApplicationId> applicationIdClusterClientProvider = clusterDescriptor.deployJobCluster(clusterSpecification, jobGraph, true);
 
         String applicationId = applicationIdClusterClientProvider.getClusterClient().getClusterId().toString();
-        String flinkJobId = jobGraph.getJobID().toString();
+        String jobId = jobGraph.getJobID().toString();
 
-        LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, flinkJobId);
+        LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, jobId);
 
-        return applicationId;
+        return Optional.of(new Pair<>(applicationId, jobId));
     }
 
     private void appendApplicationConfig(Configuration flinkConfig, JobParamsInfo jobParamsInfo) {
