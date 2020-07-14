@@ -55,6 +55,7 @@ public abstract class AbstractClusterExecutor {
         LOG.info("will cancel flink job ,appId is {},jobId is {}", appId, jobId);
         Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
         ClusterDescriptor clusterDescriptor = YarnClusterClientFactory.INSTANCE.createClusterDescriptor(jobParamsInfo.getYarnConfDir(), flinkConfiguration);
+
         //  get ClusterClient
         ApplicationId applicationId = ConverterUtils.toApplicationId(appId);
         ClusterClientProvider<ApplicationId> retrieve = clusterDescriptor.retrieve(applicationId);

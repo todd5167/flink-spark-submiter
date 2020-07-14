@@ -27,7 +27,6 @@ import cn.todd.flink.executor.YarnSessionClusterExecutor;
 import cn.todd.flink.log.RunningLog;
 import org.apache.commons.math3.util.Pair;
 import org.apache.flink.util.Preconditions;
-import org.apache.flink.util.function.FunctionUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -77,6 +76,8 @@ public class LauncherMain {
             case YARN_PERJOB:
                 new YarnJobClusterExecutor(jobParamsInfo).cancel(yarnApplicationId, jobId);
                 break;
+            case STANDALONE:
+                new StandaloneExecutor(jobParamsInfo).cancel(yarnApplicationId, jobId);
             default:
                 throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
         }
@@ -147,6 +148,9 @@ public class LauncherMain {
         // cancel job
 //        Pair<String, String> job = new Pair<>("application_1594265598097_2688", "35a679c9f94311a8a8084e4d8d06a95d");
 //        cancelFlinkJob(jobParamsInfo, job);
+
+
+
 
 
     }

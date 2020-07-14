@@ -21,9 +21,12 @@ package cn.todd.flink.executor;
 import cn.todd.flink.entity.JobParamsInfo;
 import cn.todd.flink.factory.StandaloneClientFactory;
 import cn.todd.flink.utils.JobGraphBuildUtil;
+import org.apache.commons.math3.util.Pair;
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.client.ClientUtils;
 import org.apache.flink.client.deployment.ClusterDescriptor;
+import org.apache.flink.client.deployment.ClusterRetrieveException;
 import org.apache.flink.client.deployment.StandaloneClusterId;
 import org.apache.flink.client.program.ClusterClient;
 import org.apache.flink.client.program.ClusterClientProvider;
@@ -32,21 +35,22 @@ import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 /**
  *
  * Date: 2020/6/14
  * @author todd5167
  */
-public class StandaloneExecutor {
+public class StandaloneExecutor  extends  AbstractClusterExecutor{
     private static final Logger LOG = LoggerFactory.getLogger(StandaloneExecutor.class);
 
-    JobParamsInfo jobParamsInfo;
-
     public StandaloneExecutor(JobParamsInfo jobParamsInfo) {
-        this.jobParamsInfo = jobParamsInfo;
+       super(jobParamsInfo);
     }
 
-    public String exec() throws Exception {
+    @Override
+    public Optional<Pair<String, String>> exec() throws Exception {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
         JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, jobParamsInfo.getDependFile());
 
@@ -56,10 +60,24 @@ public class StandaloneExecutor {
         ClusterClient clusterClient = clusterClientProvider.getClusterClient();
 
         JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
-        LOG.info("jobID:{}", jobExecutionResult.getJobID().toString());
+        String clusterId = clusterClient.getClusterId().toString();
+        String jobId = jobExecutionResult.getJobID().toString();
+        LOG.info("clusterId :{} ,jobID:{}", clusterId, jobId);
 
-        return "";
+        return Optional.of(new Pair<>(clusterId, jobId));
     }
 
+    @Override
+    public void cancel(String appId, String jobId) throws ClusterRetrieveException {
+        LOG.info("will cancel flink job ,appId is {},jobId is {}", appId, jobId);
+        Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
+        ClusterDescriptor clusterDescriptor = StandaloneClientFactory.INSTANCE.createClusterDescriptor("", flinkConfiguration);
+        ClusterClientProvider clusterClientProvider = clusterDescriptor.retrieve(StandaloneClusterId.getInstance());
+        ClusterClient clusterClient = clusterClientProvider.getClusterClient();
 
+        JobID runningJobId = new JobID(org.apache.flink.util.StringUtils.hexStringToByte(jobId));
+        clusterClient.cancel(runningJobId);
+        LOG.info("success cancel job, applicationId:{},jobId:{}", appId, jobId);
+
+    }
 }
