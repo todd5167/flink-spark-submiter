@@ -19,8 +19,12 @@
 package cn.todd.flink.executor;
 
 import cn.todd.flink.entity.JobParamsInfo;
+import cn.todd.flink.enums.ETaskStatus;
 import cn.todd.flink.factory.YarnClusterClientFactory;
+import cn.todd.flink.utils.HttpClientUtil;
 import cn.todd.flink.utils.JobGraphBuildUtil;
+import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.client.deployment.ClusterDescriptor;
@@ -48,9 +52,45 @@ public abstract class AbstractClusterExecutor {
     public AbstractClusterExecutor(JobParamsInfo jobParamsInfo) {
         this.jobParamsInfo = jobParamsInfo;
     }
-    // 任务提交
-    abstract Optional<Pair<String, String>> exec() throws Exception;
 
+    /**
+     * job submit
+     *
+     * @return <yarnApplicatonId, flinkJobId>
+     * @throws Exception
+     */
+    abstract Optional<Pair<String, String>> submit() throws Exception;
+
+
+    public ETaskStatus getJobStatus(String appId, String jobId) throws Exception {
+        ClusterClient clusterClient = retrieveClusterClient();
+        String webInterfaceURL = clusterClient.getWebInterfaceURL();
+        String reqUrl = webInterfaceURL + "/jobs/" + jobId;
+        String response = HttpClientUtil.getRequest(reqUrl);
+
+        JSONObject jsonObject = JSONObject.parseObject(response);
+        Object stateObj = jsonObject.get("state");
+        if (stateObj == null) {
+            return ETaskStatus.NOTFOUND;
+        }
+
+        String state = (String) stateObj;
+        ETaskStatus jobStatus = ETaskStatus.valueOf(StringUtils.upperCase(state));
+        return jobStatus;
+    }
+
+    public ClusterClient retrieveClusterClient() throws Exception {
+        //rewrite
+        return null;
+    }
+
+
+    /**
+     *  job cancel
+     * @param appId yarnApplicatonId
+     * @param jobId flinkJobId
+     * @throws ClusterRetrieveException
+     */
     public void cancel(String appId, String jobId) throws ClusterRetrieveException {
         LOG.info("will cancel flink job ,appId is {},jobId is {}", appId, jobId);
         Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());

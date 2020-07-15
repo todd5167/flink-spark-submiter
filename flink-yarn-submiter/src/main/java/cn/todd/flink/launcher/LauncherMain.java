@@ -47,13 +47,13 @@ public class LauncherMain {
         ERunMode runMode = ERunMode.convertFromString(jobParamsInfo.getRunMode());
         switch (runMode) {
             case YARN_SESSION:
-                appIdAndJobId = new YarnSessionClusterExecutor(jobParamsInfo).exec();
+                appIdAndJobId = new YarnSessionClusterExecutor(jobParamsInfo).submit();
                 break;
             case YARN_PERJOB:
-                appIdAndJobId = new YarnJobClusterExecutor(jobParamsInfo).exec();
+                appIdAndJobId = new YarnJobClusterExecutor(jobParamsInfo).submit();
                 break;
             case STANDALONE:
-                new StandaloneExecutor(jobParamsInfo).exec();
+                new StandaloneExecutor(jobParamsInfo).submit();
                 break;
             default:
                 throw new RuntimeException("Unsupported operating mode, support YARN_SESSION,YARN_SESSION,STANDALONE");
@@ -78,6 +78,28 @@ public class LauncherMain {
                 break;
             case STANDALONE:
                 new StandaloneExecutor(jobParamsInfo).cancel(yarnApplicationId, jobId);
+            default:
+                throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
+        }
+    }
+    //todo test
+    public static void getJobStatus(JobParamsInfo jobParamsInfo, Pair<String, String> appIdAndJobId) throws Exception {
+        String yarnApplicationId = appIdAndJobId.getFirst();
+        String jobId = appIdAndJobId.getSecond();
+
+        Preconditions.checkNotNull(yarnApplicationId, "application id not null!");
+        Preconditions.checkNotNull(jobId, "job  id not null!");
+
+        ERunMode runMode = ERunMode.convertFromString(jobParamsInfo.getRunMode());
+        switch (runMode) {
+            case YARN_SESSION:
+                new YarnSessionClusterExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
+                break;
+            case YARN_PERJOB:
+                new YarnJobClusterExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
+                break;
+            case STANDALONE:
+                new StandaloneExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
             default:
                 throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
         }
@@ -150,6 +172,7 @@ public class LauncherMain {
 //        cancelFlinkJob(jobParamsInfo, job);
 
 
+        // getJobStatus
 
 
 

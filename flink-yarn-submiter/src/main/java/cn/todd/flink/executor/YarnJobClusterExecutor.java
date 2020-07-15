@@ -19,6 +19,7 @@
 package cn.todd.flink.executor;
 
 import cn.todd.flink.entity.JobParamsInfo;
+import cn.todd.flink.enums.ETaskStatus;
 import cn.todd.flink.factory.YarnClusterClientFactory;
 import cn.todd.flink.utils.JobGraphBuildUtil;
 import org.apache.commons.compress.utils.Lists;
@@ -29,15 +30,24 @@ import org.apache.flink.client.program.ClusterClientProvider;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.runtime.jobgraph.JobGraph;
+import org.apache.flink.util.Preconditions;
 import org.apache.flink.yarn.YarnClusterDescriptor;
 import org.apache.flink.yarn.configuration.YarnConfigOptions;
 import org.apache.flink.yarn.configuration.YarnConfigOptionsInternal;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +70,7 @@ public class YarnJobClusterExecutor extends AbstractClusterExecutor{
     }
 
     @Override
-    public Optional<Pair<String, String>> exec() throws Exception {
+    public Optional<Pair<String, String>> submit() throws Exception {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
         Optional.ofNullable(jobParamsInfo.getDependFile())
                 .ifPresent(files -> JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, files));
@@ -83,6 +93,55 @@ public class YarnJobClusterExecutor extends AbstractClusterExecutor{
         LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, jobId);
 
         return Optional.of(new Pair<>(applicationId, jobId));
+    }
+
+    @Override
+    public ETaskStatus getJobStatus(String applicationId, String jobId) {
+        String yarnConfDir = jobParamsInfo.getFlinkConfDir();
+        Preconditions.checkNotNull(applicationId, "yarn applicaitonId is not null!");
+        Preconditions.checkNotNull(yarnConfDir, "yarn conf dir is not null!");
+
+        ApplicationId appId = ConverterUtils.toApplicationId(applicationId);
+        try {
+            YarnClient yarnClient = YarnClusterClientFactory.INSTANCE.createYarnClient(yarnConfDir);
+            ApplicationReport report = yarnClient.getApplicationReport(appId);
+
+            YarnApplicationState applicationState = report.getYarnApplicationState();
+            switch (applicationState) {
+                case KILLED:
+                    return ETaskStatus.KILLED;
+                case NEW:
+                case NEW_SAVING:
+                    return ETaskStatus.CREATED;
+                case SUBMITTED:
+                    return ETaskStatus.SUBMITTED;
+                case ACCEPTED:
+                    return ETaskStatus.ACCEPTED;
+                case RUNNING:
+                    return ETaskStatus.RUNNING;
+                case FINISHED:
+                    FinalApplicationStatus finalApplicationStatus = report.getFinalApplicationStatus();
+                    if (finalApplicationStatus == FinalApplicationStatus.FAILED) {
+                        return ETaskStatus.FAILED;
+                    } else if (finalApplicationStatus == FinalApplicationStatus.SUCCEEDED) {
+                        return ETaskStatus.FINISHED;
+                    } else if (finalApplicationStatus == FinalApplicationStatus.KILLED) {
+                        return ETaskStatus.KILLED;
+                    } else if (finalApplicationStatus == FinalApplicationStatus.UNDEFINED) {
+                        return ETaskStatus.FAILED;
+                    } else {
+                        return ETaskStatus.RUNNING;
+                    }
+
+                case FAILED:
+                    return ETaskStatus.FAILED;
+                default:
+                    throw new RuntimeException("Unsupported application state");
+            }
+        } catch (YarnException | IOException e) {
+            LOG.error("", e);
+            return ETaskStatus.NOTFOUND;
+        }
     }
 
     private void appendApplicationConfig(Configuration flinkConfig, JobParamsInfo jobParamsInfo) {

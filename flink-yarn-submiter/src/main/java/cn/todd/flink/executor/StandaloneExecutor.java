@@ -42,23 +42,19 @@ import java.util.Optional;
  * Date: 2020/6/14
  * @author todd5167
  */
-public class StandaloneExecutor  extends  AbstractClusterExecutor{
+public class StandaloneExecutor extends AbstractClusterExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(StandaloneExecutor.class);
 
     public StandaloneExecutor(JobParamsInfo jobParamsInfo) {
-       super(jobParamsInfo);
+        super(jobParamsInfo);
     }
 
     @Override
-    public Optional<Pair<String, String>> exec() throws Exception {
+    public Optional<Pair<String, String>> submit() throws Exception {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
         JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, jobParamsInfo.getDependFile());
 
-        Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
-        ClusterDescriptor clusterDescriptor = StandaloneClientFactory.INSTANCE.createClusterDescriptor("", flinkConfiguration);
-        ClusterClientProvider clusterClientProvider = clusterDescriptor.retrieve(StandaloneClusterId.getInstance());
-        ClusterClient clusterClient = clusterClientProvider.getClusterClient();
-
+        ClusterClient clusterClient = retrieveClusterClient();
         JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
         String clusterId = clusterClient.getClusterId().toString();
         String jobId = jobExecutionResult.getJobID().toString();
@@ -66,6 +62,8 @@ public class StandaloneExecutor  extends  AbstractClusterExecutor{
 
         return Optional.of(new Pair<>(clusterId, jobId));
     }
+
+
 
     @Override
     public void cancel(String appId, String jobId) throws ClusterRetrieveException {
@@ -79,5 +77,14 @@ public class StandaloneExecutor  extends  AbstractClusterExecutor{
         clusterClient.cancel(runningJobId);
         LOG.info("success cancel job, applicationId:{},jobId:{}", appId, jobId);
 
+    }
+
+    @Override
+    public ClusterClient retrieveClusterClient() throws Exception  {
+        Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
+        ClusterDescriptor clusterDescriptor = StandaloneClientFactory.INSTANCE.createClusterDescriptor("", flinkConfiguration);
+        ClusterClientProvider clusterClientProvider = clusterDescriptor.retrieve(StandaloneClusterId.getInstance());
+        ClusterClient clusterClient = clusterClientProvider.getClusterClient();
+        return clusterClient;
     }
 }

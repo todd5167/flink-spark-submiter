@@ -60,9 +60,7 @@ public enum YarnClusterClientFactory implements AbstractClusterClientFactory {
                 SecurityUtils.install(new SecurityConfiguration(flinkConfig));
 
                 YarnConfiguration yarnConf = getYarnConf(yarnConfDir);
-                YarnClient yarnClient = YarnClient.createYarnClient();
-                yarnClient.init(yarnConf);
-                yarnClient.start();
+                YarnClient yarnClient = createYarnClient(yarnConf);
 
                 YarnClusterDescriptor clusterDescriptor = new YarnClusterDescriptor(
                         flinkConfig,
@@ -89,6 +87,19 @@ public enum YarnClusterClientFactory implements AbstractClusterClientFactory {
 
         haYarnConf(yarnConf);
         return yarnConf;
+    }
+
+    public YarnClient createYarnClient(YarnConfiguration yarnConf) {
+        YarnClient yarnClient = YarnClient.createYarnClient();
+        yarnClient.init(yarnConf);
+        yarnClient.start();
+
+        return yarnClient;
+    }
+
+    public YarnClient createYarnClient(String yarnConfDir) throws IOException {
+        YarnConfiguration yarnConf = getYarnConf(yarnConfDir);
+        return createYarnClient(yarnConf);
     }
 
     /**
