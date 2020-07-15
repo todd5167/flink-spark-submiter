@@ -25,42 +25,33 @@ package cn.todd.flink.enums;
  */
 public enum ETaskStatus {
     //
-    CREATED(1),
+    CREATED,
     //
-    ACCEPTED(2),
+    ACCEPTED,
     //
-    SUBMITTED(3),
+    SUBMITTED,
     //
-    RUNNING(4),
+    RUNNING,
     //
-    KILLED(5),
+    KILLED,
     //
-    FAILED(6),
+    FAILED,
     //
-    FINISHED(7),
+    FINISHED,
     //
-    NOTFOUND(8),
+    NOTFOUND,
     //
-    FAILING(9),
+    FAILING,
     //
-    CANCELLING(10),
+    CANCELLING,
     //
-    CANCELED(11),
+    CANCELED,
     //
-    RESTARTING(12),
+    RESTARTING,
     //
-    SUSPENDED(13),
+    SUSPENDED,
     //
-    RECONCILING(14);
+    RECONCILING;
 
-    private int status;
-
-    ETaskStatus(int status) {
-        this.status = status;
-    }
-
-    public Integer getStatus() {
-        return this.status;
-    }
 
 }

@@ -54,7 +54,7 @@ public class StandaloneExecutor extends AbstractClusterExecutor {
         JobGraph jobGraph = JobGraphBuildUtil.buildJobGraph(jobParamsInfo);
         JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, jobParamsInfo.getDependFile());
 
-        ClusterClient clusterClient = retrieveClusterClient();
+        ClusterClient clusterClient = retrieveClusterClient("");
         JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
         String clusterId = clusterClient.getClusterId().toString();
         String jobId = jobExecutionResult.getJobID().toString();
@@ -80,7 +80,7 @@ public class StandaloneExecutor extends AbstractClusterExecutor {
     }
 
     @Override
-    public ClusterClient retrieveClusterClient() throws Exception  {
+    public ClusterClient retrieveClusterClient(String id) throws Exception  {
         Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
         ClusterDescriptor clusterDescriptor = StandaloneClientFactory.INSTANCE.createClusterDescriptor("", flinkConfiguration);
         ClusterClientProvider clusterClientProvider = clusterDescriptor.retrieve(StandaloneClusterId.getInstance());

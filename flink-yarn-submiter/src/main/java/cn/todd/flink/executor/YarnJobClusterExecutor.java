@@ -97,7 +97,7 @@ public class YarnJobClusterExecutor extends AbstractClusterExecutor{
 
     @Override
     public ETaskStatus getJobStatus(String applicationId, String jobId) {
-        String yarnConfDir = jobParamsInfo.getFlinkConfDir();
+        String yarnConfDir = jobParamsInfo.getYarnConfDir();
         Preconditions.checkNotNull(applicationId, "yarn applicaitonId is not null!");
         Preconditions.checkNotNull(yarnConfDir, "yarn conf dir is not null!");
 

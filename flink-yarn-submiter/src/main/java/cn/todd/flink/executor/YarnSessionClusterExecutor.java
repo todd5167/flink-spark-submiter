@@ -63,17 +63,17 @@ public class YarnSessionClusterExecutor extends AbstractClusterExecutor {
         Optional.ofNullable(jobParamsInfo.getDependFile())
                 .ifPresent(files -> JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, files));
 
-        ClusterClient clusterClient = retrieveClusterClient();
+        Object yid = jobParamsInfo.getYarnSessionConfProperties().get("yid");
+        ClusterClient clusterClient = retrieveClusterClient(yid.toString());
+
         JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
         LOG.info("jobID:{}", jobExecutionResult.getJobID().toString());
 
-        Object yid = jobParamsInfo.getYarnSessionConfProperties().get("yid");
         return Optional.of(new Pair<>(yid.toString(), jobExecutionResult.getJobID().toString()));
     }
 
     @Override
-    public ClusterClient retrieveClusterClient() throws ClusterRetrieveException {
-        Object yid = jobParamsInfo.getYarnSessionConfProperties().get("yid");
+    public ClusterClient retrieveClusterClient(String yid) throws ClusterRetrieveException {
         Preconditions.checkNotNull(yid, "yarnsession mode applicationId required!");
 
         ApplicationId applicationId = ConverterUtils.toApplicationId(yid.toString());

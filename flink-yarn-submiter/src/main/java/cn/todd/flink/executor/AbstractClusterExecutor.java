@@ -63,7 +63,7 @@ public abstract class AbstractClusterExecutor {
 
 
     public ETaskStatus getJobStatus(String appId, String jobId) throws Exception {
-        ClusterClient clusterClient = retrieveClusterClient();
+        ClusterClient clusterClient = retrieveClusterClient(appId);
         String webInterfaceURL = clusterClient.getWebInterfaceURL();
         String reqUrl = webInterfaceURL + "/jobs/" + jobId;
         String response = HttpClientUtil.getRequest(reqUrl);
@@ -79,7 +79,7 @@ public abstract class AbstractClusterExecutor {
         return jobStatus;
     }
 
-    public ClusterClient retrieveClusterClient() throws Exception {
+    public ClusterClient retrieveClusterClient(String id) throws Exception {
         //rewrite
         return null;
     }

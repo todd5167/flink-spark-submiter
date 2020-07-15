@@ -21,6 +21,7 @@ package cn.todd.flink.launcher;
 
 import cn.todd.flink.entity.JobParamsInfo;
 import cn.todd.flink.enums.ERunMode;
+import cn.todd.flink.enums.ETaskStatus;
 import cn.todd.flink.executor.StandaloneExecutor;
 import cn.todd.flink.executor.YarnJobClusterExecutor;
 import cn.todd.flink.executor.YarnSessionClusterExecutor;
@@ -82,27 +83,26 @@ public class LauncherMain {
                 throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
         }
     }
-    //todo test
-    public static void getJobStatus(JobParamsInfo jobParamsInfo, Pair<String, String> appIdAndJobId) throws Exception {
+    //todo test STANDALONE
+    public static ETaskStatus getJobStatus(JobParamsInfo jobParamsInfo, Pair<String, String> appIdAndJobId) throws Exception {
         String yarnApplicationId = appIdAndJobId.getFirst();
         String jobId = appIdAndJobId.getSecond();
 
-        Preconditions.checkNotNull(yarnApplicationId, "application id not null!");
-        Preconditions.checkNotNull(jobId, "job  id not null!");
-
         ERunMode runMode = ERunMode.convertFromString(jobParamsInfo.getRunMode());
+        ETaskStatus jobStatus;
         switch (runMode) {
             case YARN_SESSION:
-                new YarnSessionClusterExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
+                jobStatus = new YarnSessionClusterExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
                 break;
             case YARN_PERJOB:
-                new YarnJobClusterExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
+                jobStatus = new YarnJobClusterExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
                 break;
             case STANDALONE:
-                new StandaloneExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
+                jobStatus = new StandaloneExecutor(jobParamsInfo).getJobStatus(yarnApplicationId, jobId);
             default:
                 throw new RuntimeException("Unsupported operating mode, yarnSession,yarnPer");
         }
+        return jobStatus;
     }
 
     public static void printRollingLogBaseInfo(JobParamsInfo jobParamsInfo, Pair<String, String> appIdAndJobId) {
@@ -138,10 +138,13 @@ public class LauncherMain {
         // 任务提交队列
         String queue = "c";
         // yarnsession appid配置
-        Properties yarnSessionConfProperties = null;
+        Properties yarnSessionConfProperties = new Properties();
+        yarnSessionConfProperties.setProperty("yid", "application_1594265598097_5425");
+
         // savepoint 及并行度相关
         Properties confProperties = new Properties();
         confProperties.setProperty("parallelism", "1");
+
 
         JobParamsInfo jobParamsInfo = JobParamsInfo.builder()
                 .setExecArgs(execArgs)
@@ -163,9 +166,9 @@ public class LauncherMain {
 
     public static void main(String[] args) throws Exception {
         JobParamsInfo jobParamsInfo = buildJobParamsInfo();
-        Optional<Pair<String, String>> appIdAndJobId = submitFlinkJob(jobParamsInfo);
-        // log info
-        appIdAndJobId.ifPresent((pair) -> printRollingLogBaseInfo(jobParamsInfo, pair));
+//        Optional<Pair<String, String>> appIdAndJobId = submitFlinkJob(jobParamsInfo);
+//        // log info
+//        appIdAndJobId.ifPresent((pair) -> printRollingLogBaseInfo(jobParamsInfo, pair));
 
         // cancel job
 //        Pair<String, String> job = new Pair<>("application_1594265598097_2688", "35a679c9f94311a8a8084e4d8d06a95d");
@@ -173,8 +176,7 @@ public class LauncherMain {
 
 
         // getJobStatus
-
-
-
+        ETaskStatus jobStatus = getJobStatus(jobParamsInfo, new Pair<>("application_1594265598097_5425", "fa4ae50441c5d5363e8abbe5623e115a"));
+        System.out.println("job status is : " + jobStatus.toString());
     }
 }
