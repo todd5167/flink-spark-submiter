@@ -25,6 +25,7 @@ import cn.todd.flink.enums.ETaskStatus;
 import cn.todd.flink.executor.StandaloneExecutor;
 import cn.todd.flink.executor.YarnJobClusterExecutor;
 import cn.todd.flink.executor.YarnSessionClusterExecutor;
+import cn.todd.flink.log.FinishedLog;
 import cn.todd.flink.log.RunningLog;
 import org.apache.commons.math3.util.Pair;
 import org.apache.flink.util.Preconditions;
@@ -116,6 +117,20 @@ public class LauncherMain {
         }
     }
 
+    /**
+     *  yarn per job fininshed log
+     * @param jobParamsInfo
+     * @param applicationId
+     */
+    public static void printFinishedLog(JobParamsInfo jobParamsInfo, String applicationId) {
+        try {
+            new FinishedLog().printAllContainersLogs(jobParamsInfo, applicationId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public static JobParamsInfo buildJobParamsInfo() {
 
         //        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
@@ -167,7 +182,8 @@ public class LauncherMain {
     public static void main(String[] args) throws Exception {
         JobParamsInfo jobParamsInfo = buildJobParamsInfo();
 //        Optional<Pair<String, String>> appIdAndJobId = submitFlinkJob(jobParamsInfo);
-//        // log info
+
+        // running log info
 //        appIdAndJobId.ifPresent((pair) -> printRollingLogBaseInfo(jobParamsInfo, pair));
 
         // cancel job
@@ -176,7 +192,10 @@ public class LauncherMain {
 
 
         // getJobStatus
-        ETaskStatus jobStatus = getJobStatus(jobParamsInfo, new Pair<>("application_1594265598097_5425", "fa4ae50441c5d5363e8abbe5623e115a"));
-        System.out.println("job status is : " + jobStatus.toString());
+//        ETaskStatus jobStatus = getJobStatus(jobParamsInfo, new Pair<>("application_1594265598097_5425", "fa4ae50441c5d5363e8abbe5623e115a"));
+//        System.out.println("job status is : " + jobStatus.toString());
+
+        // print finished Log
+        printFinishedLog(jobParamsInfo,"application_1594961717891_0103");
     }
 }

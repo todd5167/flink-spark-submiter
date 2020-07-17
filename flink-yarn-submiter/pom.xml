@@ -17,14 +17,10 @@
         <httpmime.version>4.3.1</httpmime.version>
         <log4j.version>1.2.17</log4j.version>
         <fastjson.version>1.2.58</fastjson.version>
+        <flink.shaded.hadoop.version>2.7.5-7.0</flink.shaded.hadoop.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-yarn_2.11</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-common</artifactId>
@@ -83,6 +79,18 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-yarn-api</artifactId>
             <version>${hadoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-yarn_2.11</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-shaded-hadoop-2</artifactId>
+            <version>${flink.shaded.hadoop.version}</version>
         </dependency>
 
         <dependency>

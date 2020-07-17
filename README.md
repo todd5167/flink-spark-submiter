@@ -28,6 +28,7 @@ Flink任务、Spark任务提交到集群，通常需要将可执行Jar上传到�
  - 支持以YarnSession、YarnPerjob、Standalone模式进行任务提交，返回ApplicationId。
  - example模块下包含一个FlinkDemo，打包后会转移到项目的examplJars中，可以尝试进行任务提交。
  - 任务提交后，根据ApplicationId获取任务执行使用的jm、tm日志基本信息，包含日志访问URL,日志总字节大小,根据日志基本信息可以做日志滚动展示，防止Yarn日志过大导致日志读取卡死。
+ - 提供任务取消、任务状态获取、已完成任务日志获取接口。
 
 任务提交示例：
  ```
