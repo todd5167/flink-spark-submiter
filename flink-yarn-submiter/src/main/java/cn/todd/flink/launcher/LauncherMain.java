@@ -181,21 +181,21 @@ public class LauncherMain {
 
     public static void main(String[] args) throws Exception {
         JobParamsInfo jobParamsInfo = buildJobParamsInfo();
-//        Optional<Pair<String, String>> appIdAndJobId = submitFlinkJob(jobParamsInfo);
+        Optional<Pair<String, String>> appIdAndJobId = submitFlinkJob(jobParamsInfo);
 
-        // running log info
+//        // running log info
 //        appIdAndJobId.ifPresent((pair) -> printRollingLogBaseInfo(jobParamsInfo, pair));
-
-        // cancel job
+//
+//        // cancel job
 //        Pair<String, String> job = new Pair<>("application_1594265598097_2688", "35a679c9f94311a8a8084e4d8d06a95d");
 //        cancelFlinkJob(jobParamsInfo, job);
-
-
-        // getJobStatus
+//
+//
+//        // getJobStatus
 //        ETaskStatus jobStatus = getJobStatus(jobParamsInfo, new Pair<>("application_1594265598097_5425", "fa4ae50441c5d5363e8abbe5623e115a"));
 //        System.out.println("job status is : " + jobStatus.toString());
-
-        // print finished Log
-        printFinishedLog(jobParamsInfo,"application_1594961717891_0103");
+//
+//        // print finished Log
+//        printFinishedLog(jobParamsInfo,"application_1594961717891_0103");
     }
 }

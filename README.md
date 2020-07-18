@@ -30,52 +30,75 @@ Flink任务、Spark任务提交到集群，通常需要将可执行Jar上传到�
  - 任务提交后，根据ApplicationId获取任务执行使用的jm、tm日志基本信息，包含日志访问URL,日志总字节大小,根据日志基本信息可以做日志滚动展示，防止Yarn日志过大导致日志读取卡死。
  - 提供任务取消、任务状态获取、已完成任务日志获取接口。
 
-任务提交示例：
+任务操作示例：
  ```
-    // 可执行jar包路径
-     String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
-     // 任务参数
-     String[] execArgs = new String[]{"-jobName", "flink110Submit", "--topic", "mqTest01", "--bootstrapServers", "172.16.8.107:9092"};
-     // 任务名称
-     String jobName = "Flink perjob submit";
-     // flink 文件夹路径
-     String flinkConfDir = "/Users/maqi/tmp/flink/flink-1.10.0/conf";
-     // flink lib包路径
-     String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
-     //  yarn 文件夹路径
-     //        String yarnConfDir = "/Users/maqi/tmp/hadoopconf";
-     String yarnConfDir = "/Users/maqi/tmp/hadoopconf";
-     //  作业依赖的外部文件，例如：udf jar , keytab
-     String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
-     // 任务提交队列
-     String queue = "root.users.hdfs";
-     // flink任务执行模式
-     String execMode = "yarnPerjob";
-     // yarnsession appid配置
-     Properties yarnSessionConfProperties = null;
-     // savepoint 及并行度相关
-     Properties confProperties = new Properties();
-     confProperties.setProperty("parallelism", "1");
+    public static JobParamsInfo buildJobParamsInfo() {
 
-   JobParamsInfo jobParamsInfo = JobParamsInfo.builder()
-             .setExecArgs(execArgs)
-             .setName(jobName)
-             .setRunJarPath(runJarPath)
-             .setDependFile(dependFile)
-             .setFlinkConfDir(flinkConfDir)
-             .setYarnConfDir(yarnConfDir)
-             .setConfProperties(confProperties)
-             .setYarnSessionConfProperties(yarnSessionConfProperties)
-             .setFlinkJarPath(flinkJarPath)
-             .setQueue(queue)
-             .build();
+        //        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
+        // 可执行jar包路径
+        String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
+        // 任务参数
+        String[] execArgs = new String[]{"-jobName", "flink110Submit", "--topic", "mqTest01", "--bootstrapServers", "172.16.8.107:9092"};
+        // 任务名称
+        String jobName = "Flink perjob submit";
+        // flink 文件夹路径
+        String flinkConfDir = "/Users/maqi/tmp/flink/flink-1.10.0/conf";
+        // flink lib包路径
+        String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
+        //  yarn 文件夹路径
+        String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
+        // perjob 运行流任务
+        String runMode = "yarn_perjob";
+        //  作业依赖的外部文件
+        String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
+        // 任务提交队列
+        String queue = "c";
+        // yarnsession appid配置
+        Properties yarnSessionConfProperties = new Properties();
+        yarnSessionConfProperties.setProperty("yid", "application_1594265598097_5425");
 
- 
-    String applicationId = runFlinkJob(jobParamsInfo, execMode);
-    //任务启动后，拉取jm,tm日志相关信息。
-    Thread.sleep(20000);
-    List<String> logsInfo = new RunningLog().getRollingLogBaseInfo(jobParamsInfo, applicationId);
-    logsInfo.forEach(System.out::println);
+        // savepoint 及并行度相关
+        Properties confProperties = new Properties();
+        confProperties.setProperty("parallelism", "1");
+
+
+        JobParamsInfo jobParamsInfo = JobParamsInfo.builder()
+                .setExecArgs(execArgs)
+                .setName(jobName)
+                .setRunJarPath(runJarPath)
+                .setDependFile(dependFile)
+                .setFlinkConfDir(flinkConfDir)
+                .setYarnConfDir(yarnConfDir)
+                .setConfProperties(confProperties)
+                .setYarnSessionConfProperties(yarnSessionConfProperties)
+                .setFlinkJarPath(flinkJarPath)
+                .setQueue(queue)
+                .setRunMode(runMode)
+                .build();
+
+        return jobParamsInfo;
+    }
+
+
+    public static void main(String[] args) throws Exception {
+        JobParamsInfo jobParamsInfo = buildJobParamsInfo();
+        // job submit 
+        Optional<Pair<String, String>> appIdAndJobId = submitFlinkJob(jobParamsInfo);
+
+        // running log info
+        appIdAndJobId.ifPresent((pair) -> printRollingLogBaseInfo(jobParamsInfo, pair));
+
+        // cancel job
+        Pair<String, String> job = new Pair<>("application_1594265598097_2688", "35a679c9f94311a8a8084e4d8d06a95d");
+        cancelFlinkJob(jobParamsInfo, job);
+
+        // flink job status
+        ETaskStatus jobStatus = getJobStatus(jobParamsInfo, new Pair<>("application_1594265598097_5425", "fa4ae50441c5d5363e8abbe5623e115a"));
+        System.out.println("job status is : " + jobStatus.toString());
+
+        // print finished Log
+        printFinishedLog(jobParamsInfo,"application_1594961717891_0103");
+    }
  ```
  
 jobmanager日志格式:
