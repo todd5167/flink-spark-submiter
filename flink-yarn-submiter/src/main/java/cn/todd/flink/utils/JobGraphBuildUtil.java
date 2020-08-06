@@ -57,6 +57,7 @@ public class JobGraphBuildUtil {
         String flinkConfDir = jobParamsInfo.getFlinkConfDir();
         String[] execArgs = jobParamsInfo.getExecArgs();
         String runJarPath = jobParamsInfo.getRunJarPath();
+        String entryPointClassName = jobParamsInfo.getEntryPointClassName();
 
         Preconditions.checkArgument(FileUtils.getFile(runJarPath).exists(), "runJarPath not exist!");
 
@@ -66,6 +67,7 @@ public class JobGraphBuildUtil {
         PackagedProgram program = PackagedProgram.newBuilder()
                 .setJarFile(runJarFile)
                 .setArguments(execArgs)
+                .setEntryPointClassName(entryPointClassName)
                 .setSavepointRestoreSettings(savepointRestoreSettings)
                 .build();
 

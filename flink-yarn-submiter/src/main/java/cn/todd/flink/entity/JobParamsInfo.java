@@ -36,6 +36,7 @@ public class JobParamsInfo {
     private String flinkConfDir;
     private String flinkJarPath;
     private String yarnConfDir;
+    private String entryPointClassName;
     private String[] dependFile;
     private String[] execArgs;
     private Properties confProperties;
@@ -43,7 +44,7 @@ public class JobParamsInfo {
 
     private JobParamsInfo(String name, String queue, String runJarPath, String flinkConfDir, String yarnConfDir,
                           String[] execArgs, Properties confProperties, Properties yarnSessionConfProperties,
-                          String[] dependFile, String flinkJarPath, String runMode) {
+                          String[] dependFile, String flinkJarPath, String runMode, String entryPointClassName) {
         this.name = name;
         this.queue = queue;
         this.runJarPath = runJarPath;
@@ -55,6 +56,7 @@ public class JobParamsInfo {
         this.dependFile = dependFile;
         this.flinkJarPath = flinkJarPath;
         this.runMode = runMode;
+        this.entryPointClassName = entryPointClassName;
     }
 
     public String getName() {
@@ -73,6 +75,9 @@ public class JobParamsInfo {
         return yarnConfDir;
     }
 
+    public String getEntryPointClassName() {
+        return entryPointClassName;
+    }
 
     public String[] getExecArgs() {
         return execArgs;
@@ -114,6 +119,7 @@ public class JobParamsInfo {
         private String flinkConfDir;
         private String flinkJarPath;
         private String yarnConfDir;
+        private String entryPointClassName;
         private String[] dependFile;
         private String[] execArgs;
         private Properties confProperties;
@@ -175,9 +181,14 @@ public class JobParamsInfo {
             return this;
         }
 
+        public JobParamsInfo.Builder setEntryPointClassName(String entryPointClassName) {
+            this.entryPointClassName = entryPointClassName;
+            return this;
+        }
+
         public JobParamsInfo build() {
             return new JobParamsInfo(name, queue, runJarPath, flinkConfDir, yarnConfDir, execArgs,
-                    confProperties, yarnSessionConfProperties, dependFile, flinkJarPath, runMode);
+                    confProperties, yarnSessionConfProperties, dependFile, flinkJarPath, runMode, entryPointClassName);
         }
     }
 
