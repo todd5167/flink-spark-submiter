@@ -145,16 +145,20 @@ public class LauncherMain {
         // flink lib包路径
         String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
         //  yarn 文件夹路径
-        String yarnConfDir = "/Users/maqi/tmp/hadoopconf/195";
+        String yarnConfDir = "/Users/maqi/tmp/hadoopconf/dev40/hadoop";
         // perjob 运行流任务
         String runMode = "yarn_perjob";
         //  作业依赖的外部文件
         String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
         // 任务提交队列
-        String queue = "c";
+        String queue = "default";
         // yarnsession appid配置
         Properties yarnSessionConfProperties = new Properties();
         yarnSessionConfProperties.setProperty("yid", "application_1594265598097_5425");
+
+        // 非必要参数，可以通过shade打包指定mainClass, flink自动获取
+        // String entryPointClassName = "cn.todd.flink.KafkaReader";
+        String entryPointClassName = null;
 
         // savepoint 及并行度相关
         Properties confProperties = new Properties();
@@ -173,6 +177,7 @@ public class LauncherMain {
                 .setFlinkJarPath(flinkJarPath)
                 .setQueue(queue)
                 .setRunMode(runMode)
+                .setEntryPointClassName(entryPointClassName)
                 .build();
 
         return jobParamsInfo;
