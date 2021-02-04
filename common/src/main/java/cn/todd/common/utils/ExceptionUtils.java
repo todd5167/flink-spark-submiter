@@ -25,8 +25,6 @@
 package cn.todd.common.utils;
 
 
-import com.sun.istack.internal.Nullable;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -167,7 +165,7 @@ public final class ExceptionUtils {
 	 * @return The new exception, if no previous exception exists, or the previous exception with the
 	 *         new exception in the list of suppressed exceptions.
 	 */
-	public static <T extends Throwable> T firstOrSuppressed(T newException, @Nullable T previous) {
+	public static <T extends Throwable> T firstOrSuppressed(T newException, T previous) {
 //		checkNotNull(newException, "newException");
 
 		if (previous == null) {
@@ -262,7 +260,7 @@ public final class ExceptionUtils {
 	 * @param e exception to throw if not null.
 	 * @throws Exception
 	 */
-	public static void tryRethrowException(@Nullable Exception e) throws Exception {
+	public static void tryRethrowException(Exception e) throws Exception {
 		if (e != null) {
 			throw e;
 		}
