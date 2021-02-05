@@ -22,9 +22,7 @@ import cn.todd.flink.entity.JobParamsInfo;
 import cn.todd.flink.factory.StandaloneClientFactory;
 import cn.todd.flink.utils.JobGraphBuildUtil;
 import org.apache.commons.math3.util.Pair;
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobID;
-import org.apache.flink.client.ClientUtils;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.deployment.ClusterRetrieveException;
 import org.apache.flink.client.deployment.StandaloneClusterId;
@@ -36,10 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * Date: 2020/6/14
+ *
  * @author todd5167
  */
 public class StandaloneExecutor extends AbstractClusterExecutor {
@@ -55,14 +54,17 @@ public class StandaloneExecutor extends AbstractClusterExecutor {
         JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, jobParamsInfo.getDependFile());
 
         ClusterClient clusterClient = retrieveClusterClient("");
-        JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
         String clusterId = clusterClient.getClusterId().toString();
-        String jobId = jobExecutionResult.getJobID().toString();
-        LOG.info("clusterId :{} ,jobID:{}", clusterId, jobId);
 
-        return Optional.of(new Pair<>(clusterId, jobId));
+        CompletableFuture completableFuture = clusterClient
+                .submitJob(jobGraph)
+                .whenComplete((ignored1, ignored2) -> clusterClient.close());
+
+        JobID jobID = (JobID) completableFuture.get();
+        LOG.info("clusterId :{} ,jobID:{}", clusterId, jobID);
+
+        return Optional.of(new Pair<>(clusterId, jobID.toString()));
     }
-
 
 
     @Override
@@ -80,7 +82,7 @@ public class StandaloneExecutor extends AbstractClusterExecutor {
     }
 
     @Override
-    public ClusterClient retrieveClusterClient(String id) throws Exception  {
+    public ClusterClient retrieveClusterClient(String id) throws Exception {
         Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
         ClusterDescriptor clusterDescriptor = StandaloneClientFactory.INSTANCE.createClusterDescriptor("", flinkConfiguration);
         ClusterClientProvider clusterClientProvider = clusterDescriptor.retrieve(StandaloneClusterId.getInstance());

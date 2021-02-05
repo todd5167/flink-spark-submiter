@@ -39,9 +39,6 @@ public interface AbstractClusterClientFactory {
     default ClusterSpecification getClusterSpecification(Configuration configuration) {
         checkNotNull(configuration);
 
-        final int jobManagerMemoryMb = ConfigurationUtils
-                .getJobManagerHeapMemory(configuration)
-                .getMebiBytes();
 
         final int taskManagerMemoryMb = TaskExecutorProcessUtils
                 .processSpecFromConfig(TaskExecutorProcessUtils.getConfigurationMapLegacyTaskManagerHeapSizeToConfigOption(
@@ -52,7 +49,7 @@ public interface AbstractClusterClientFactory {
         int slotsPerTaskManager = configuration.getInteger(TaskManagerOptions.NUM_TASK_SLOTS);
 
         return new ClusterSpecification.ClusterSpecificationBuilder()
-                .setMasterMemoryMB(jobManagerMemoryMb)
+//                .setMasterMemoryMB(jobManagerMemoryMb)
                 .setTaskManagerMemoryMB(taskManagerMemoryMb)
                 .setSlotsPerTaskManager(slotsPerTaskManager)
                 .createClusterSpecification();

@@ -20,15 +20,10 @@ package cn.todd.flink.executor;
 
 
 import cn.todd.flink.entity.JobParamsInfo;
-import cn.todd.flink.enums.ETaskStatus;
 import cn.todd.flink.factory.YarnClusterClientFactory;
-import cn.todd.flink.utils.HttpClientUtil;
 import cn.todd.flink.utils.JobGraphBuildUtil;
-import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.flink.api.common.JobExecutionResult;
-import org.apache.flink.client.ClientUtils;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.deployment.ClusterRetrieveException;
 import org.apache.flink.client.program.ClusterClient;
@@ -41,13 +36,13 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
- *
  * Date: 2020/6/14
+ *
  * @author todd5167
  */
 public class YarnSessionClusterExecutor extends AbstractClusterExecutor {
@@ -65,11 +60,14 @@ public class YarnSessionClusterExecutor extends AbstractClusterExecutor {
 
         Object yid = jobParamsInfo.getYarnSessionConfProperties().get("yid");
         ClusterClient clusterClient = retrieveClusterClient(yid.toString());
+        CompletableFuture completableFuture = clusterClient
+                .submitJob(jobGraph)
+                .whenComplete((ignored1, ignored2) -> clusterClient.close());
 
-        JobExecutionResult jobExecutionResult = ClientUtils.submitJob(clusterClient, jobGraph);
-        LOG.info("jobID:{}", jobExecutionResult.getJobID().toString());
+        JobID jobID = (JobID) completableFuture.get();
+        LOG.info("jobID:{}", jobID.toString());
 
-        return Optional.of(new Pair<>(yid.toString(), jobExecutionResult.getJobID().toString()));
+        return Optional.of(new Pair<>(yid.toString(), jobID.toString()));
     }
 
     @Override

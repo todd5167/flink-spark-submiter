@@ -135,26 +135,26 @@ public class LauncherMain {
 
         //        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
         // 可执行jar包路径
-        String runJarPath = "/Users/maqi/code/ClustersSubmiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
+        String runJarPath = "/Users/maqi/code/flink-spark-submiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
         // 任务参数
-        String[] execArgs = new String[]{"-jobName", "flink110Submit", "--topic", "mqTest01", "--bootstrapServers", "172.16.8.107:9092"};
+        String[] execArgs = new String[]{"-jobName", "flink112Submit", "--topic", "mqTest01", "--bootstrapServers", "127.0.0.1:9092"};
         // 任务名称
         String jobName = "Flink perjob submit";
         // flink 文件夹路径
-        String flinkConfDir = "/Users/maqi/tmp/flink/flink-1.10.0/conf";
+        String flinkConfDir = "/Users/maqi/tools/flink-1.12.1/conf";
         // flink lib包路径
-        String flinkJarPath = "/Users/maqi/tmp/flink/flink-1.10.0/lib";
+        String flinkJarPath = "/Users/maqi/tools/flink-1.12.1/lib";
         //  yarn 文件夹路径
-        String yarnConfDir = "/Users/maqi/tmp/hadoopconf/dev40/hadoop";
+        String yarnConfDir = "/Users/maqi/tools/hadoop-2.8.0/etc/hadoop";
         // perjob 运行流任务
         String runMode = "yarn_perjob";
         //  作业依赖的外部文件
-        String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.10.0/README.txt"};
+        String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.12.0/README.txt"};
         // 任务提交队列
         String queue = "default";
         // yarnsession appid配置
         Properties yarnSessionConfProperties = new Properties();
-        yarnSessionConfProperties.setProperty("yid", "application_1594265598097_5425");
+        yarnSessionConfProperties.setProperty("yid", "application_1612491301388_0006");
 
         // 非必要参数，可以通过shade打包指定mainClass, flink自动获取
         // String entryPointClassName = "cn.todd.flink.KafkaReader";

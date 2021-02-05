@@ -24,7 +24,7 @@ import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.types.Row;
 
 import java.util.Properties;
@@ -53,7 +53,7 @@ public class KafkaReader {
         types[2] = Types.STRING;
         TypeInformation<Row> typeInformation = new RowTypeInfo(types, new String[]{"id", "name", "city"});
 
-        FlinkKafkaConsumer011<Row> consumer11 = new FlinkKafkaConsumer011<Row>(topic,
+        FlinkKafkaConsumer<Row> consumer11 = new FlinkKafkaConsumer<Row>(topic,
                 new MqJsonRowDeserializationSchema(typeInformation, false),
                 props);
 
