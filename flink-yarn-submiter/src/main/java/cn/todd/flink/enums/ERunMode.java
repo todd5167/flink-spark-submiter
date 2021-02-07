@@ -29,6 +29,9 @@ public enum ERunMode {
     /* 为Job新建应用，适合长期执行的任务 **/
     YARN_PERJOB,
 
+    /* 避免从client上传文件，导致的网络IO开销 **/
+    YARN_APPLICATION,
+
     STANDALONE;
 
     public static ERunMode convertFromString(String type) {

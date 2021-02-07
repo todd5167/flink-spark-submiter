@@ -23,6 +23,7 @@ import cn.todd.flink.entity.JobParamsInfo;
 import cn.todd.flink.enums.ERunMode;
 import cn.todd.flink.enums.ETaskStatus;
 import cn.todd.flink.executor.StandaloneExecutor;
+import cn.todd.flink.executor.YarnApplicationClusterExecutor;
 import cn.todd.flink.executor.YarnJobClusterExecutor;
 import cn.todd.flink.executor.YarnSessionClusterExecutor;
 import cn.todd.flink.log.FinishedLog;
@@ -53,6 +54,9 @@ public class LauncherMain {
                 break;
             case YARN_PERJOB:
                 appIdAndJobId = new YarnJobClusterExecutor(jobParamsInfo).submit();
+                break;
+            case YARN_APPLICATION:
+                appIdAndJobId = new YarnApplicationClusterExecutor(jobParamsInfo).submit();
                 break;
             case STANDALONE:
                 new StandaloneExecutor(jobParamsInfo).submit();
@@ -141,13 +145,13 @@ public class LauncherMain {
         // 任务名称
         String jobName = "Flink perjob submit";
         // flink 文件夹路径
-        String flinkConfDir = "/Users/maqi/tools/flink-1.12.1/conf";
+        String flinkConfDir = "/Users/mq/tools/flink-1.12.1/conf";
         // flink lib包路径
-        String flinkJarPath = "/Users/maqi/tools/flink-1.12.1/lib";
+        String flinkJarPath = "/Users/mq/tools/flink-1.12.1/lib";
         //  yarn 文件夹路径
-        String yarnConfDir = "/Users/maqi/tools/hadoop-2.8.0/etc/hadoop";
+        String yarnConfDir = "/Users/mq/tools/hadoop-2.8.0/etc/hadoop";
         // perjob 运行流任务
-        String runMode = "yarn_perjob";
+        String runMode = "yarn_application";
         //  作业依赖的外部文件
         String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.12.0/README.txt"};
         // 任务提交队列
@@ -168,13 +172,13 @@ public class LauncherMain {
         JobParamsInfo jobParamsInfo = JobParamsInfo.builder()
                 .setExecArgs(execArgs)
                 .setName(jobName)
-                .setRunJarPath(runJarPath)
-                .setDependFile(dependFile)
+//                .setRunJarPath(runJarPath)
+//                .setDependFile(dependFile)
                 .setFlinkConfDir(flinkConfDir)
                 .setYarnConfDir(yarnConfDir)
                 .setConfProperties(confProperties)
-                .setYarnSessionConfProperties(yarnSessionConfProperties)
-                .setFlinkJarPath(flinkJarPath)
+//                .setYarnSessionConfProperties(yarnSessionConfProperties)
+//                .setFlinkJarPath(flinkJarPath)
                 .setQueue(queue)
                 .setRunMode(runMode)
                 .setEntryPointClassName(entryPointClassName)
@@ -201,6 +205,6 @@ public class LauncherMain {
 //        System.out.println("job status is : " + jobStatus.toString());
 //
 //        // print finished Log
-//        printFinishedLog(jobParamsInfo,"application_1594961717891_0103");
+        printFinishedLog(jobParamsInfo,"application_1612618193326_0009");
     }
 }
