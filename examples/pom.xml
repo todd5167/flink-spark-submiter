@@ -14,6 +14,7 @@
     <modules>
         <module>spark-sql-proxy</module>
         <module>flink-kafka-reader</module>
+        <module>flink-sql-executor</module>
     </modules>
 
 

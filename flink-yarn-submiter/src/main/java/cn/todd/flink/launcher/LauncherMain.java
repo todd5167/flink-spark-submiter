@@ -135,21 +135,21 @@ public class LauncherMain {
 
         //        System.setProperty("java.security.krb5.conf", "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
         // 可执行jar包路径
-        String runJarPath = "/Users/maqi/code/flink-spark-submiter/exampleJars/flink-kafka-reader/flink-kafka-reader.jar";
+        String runJarPath = "/Users/tal/code/flink-spark-submiter/exampleJars/flink-sql-executor/flink-sql-executor.jar";
         // 任务参数
-        String[] execArgs = new String[]{"-jobName", "flink112Submit", "--topic", "mqTest01", "--bootstrapServers", "127.0.0.1:9092"};
+        String[] execArgs = new String[]{"-sqlFilePath", "/Users/tal/code/flink-spark-submiter/examples/flink-sql-executor/src/main/resources/sql/gen-console.sql"};
         // 任务名称
         String jobName = "Flink perjob submit";
         // flink 文件夹路径
-        String flinkConfDir = "/Users/maqi/tools/flink-1.12.1/conf";
+        String flinkConfDir = "/Users/tal/tools/flink-1.12.1/conf";
         // flink lib包路径
-        String flinkJarPath = "/Users/maqi/tools/flink-1.12.1/lib";
+        String flinkJarPath = "/Users/tal/tools/flink-1.12.1/lib";
         //  yarn 文件夹路径
-        String yarnConfDir = "/Users/maqi/tools/hadoop-2.8.0/etc/hadoop";
+        String yarnConfDir = "/Users/tal/tools/hadoop-2.8.0/etc/hadoop";
         // perjob 运行流任务
         String runMode = "yarn_perjob";
         //  作业依赖的外部文件
-        String[] dependFile = new String[]{"/Users/maqi/tmp/flink/flink-1.12.0/README.txt"};
+        String[] dependFile = new String[]{};
         // 任务提交队列
         String queue = "default";
         // yarnsession appid配置
