@@ -21,46 +21,46 @@ package cn.todd.flink.factory;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.ConfigurationUtils;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-
 /**
- *
  * Date: 2020/6/14
+ *
  * @author todd5167
  */
-
 public interface AbstractClusterClientFactory {
 
     default ClusterSpecification getClusterSpecification(Configuration configuration) {
         checkNotNull(configuration);
 
-
-        final int taskManagerMemoryMb = TaskExecutorProcessUtils
-                .processSpecFromConfig(TaskExecutorProcessUtils.getConfigurationMapLegacyTaskManagerHeapSizeToConfigOption(
-                        configuration, TaskManagerOptions.TOTAL_PROCESS_MEMORY))
-                .getTotalProcessMemorySize()
-                .getMebiBytes();
+        final int taskManagerMemoryMb =
+                TaskExecutorProcessUtils.processSpecFromConfig(
+                                TaskExecutorProcessUtils
+                                        .getConfigurationMapLegacyTaskManagerHeapSizeToConfigOption(
+                                                configuration,
+                                                TaskManagerOptions.TOTAL_PROCESS_MEMORY))
+                        .getTotalProcessMemorySize()
+                        .getMebiBytes();
 
         int slotsPerTaskManager = configuration.getInteger(TaskManagerOptions.NUM_TASK_SLOTS);
 
         return new ClusterSpecification.ClusterSpecificationBuilder()
-//                .setMasterMemoryMB(jobManagerMemoryMb)
+                //                .setMasterMemoryMB(jobManagerMemoryMb)
                 .setTaskManagerMemoryMB(taskManagerMemoryMb)
                 .setSlotsPerTaskManager(slotsPerTaskManager)
                 .createClusterSpecification();
     }
 
     /**
-     *  create ClusterDescriptor
-     * @param clusterConfPath  cluster configuration path , E.g. yarn conf dir
+     * create ClusterDescriptor
+     *
+     * @param clusterConfPath cluster configuration path , E.g. yarn conf dir
      * @param flinkConfig
      * @return
      */
-    abstract ClusterDescriptor createClusterDescriptor(String clusterConfPath, Configuration flinkConfig);
-
+    abstract ClusterDescriptor createClusterDescriptor(
+            String clusterConfPath, Configuration flinkConfig);
 }

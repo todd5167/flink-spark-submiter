@@ -11,11 +11,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 /**
+ * AM URL解析 Date: 2020/6/15
  *
- *  AM URL解析
- * Date: 2020/6/15
  * @author todd5167
  */
 public class ApplicationWSParser {
@@ -26,7 +24,8 @@ public class ApplicationWSParser {
     public static final String AM_USER_TAG = "user";
     public static final String TRACKING_URL = "trackingUrl";
 
-    private static final Pattern ERR_INFO_BYTE_PATTERN = Pattern.compile("(?<name>[^:]+):+\\s+[a-zA-Z\\s]+(\\d+)\\s*bytes");
+    private static final Pattern ERR_INFO_BYTE_PATTERN =
+            Pattern.compile("(?<name>[^:]+):+\\s+[a-zA-Z\\s]+(\\d+)\\s*bytes");
 
     public final Map<String, String> amParams;
 
@@ -40,8 +39,8 @@ public class ApplicationWSParser {
         return amParams.get(key);
     }
 
-
-    public RollingBaseInfo parseContainerLogBaseInfo(String containerLogsURL, String preURL) throws IOException {
+    public RollingBaseInfo parseContainerLogBaseInfo(String containerLogsURL, String preURL)
+            throws IOException {
         String amContainerPreViewHttp = HttpClientUtil.getRequest(containerLogsURL);
         org.jsoup.nodes.Document document = Jsoup.parse(amContainerPreViewHttp);
         Elements el = document.getElementsByClass("content");
@@ -51,13 +50,14 @@ public class ApplicationWSParser {
 
         Elements afs = el.get(0).select("a[href]");
         if (afs.size() < 1) {
-            throw new RuntimeException("httpText data format not correct, please check task status or url response content!!");
+            throw new RuntimeException(
+                    "httpText data format not correct, please check task status or url response content!!");
         }
 
         RollingBaseInfo rollingBaseInfo = new RollingBaseInfo();
         for (int i = 0; i < afs.size(); i++) {
             String logURL = afs.get(i).attr("href");
-            //截取url参数部分
+            // 截取url参数部分
             logURL = logURL.substring(0, logURL.indexOf("?"));
             logURL = preURL + logURL;
 
@@ -87,9 +87,7 @@ public class ApplicationWSParser {
         String url;
         String totalBytes;
 
-        public LogBaseInfo() {
-
-        }
+        public LogBaseInfo() {}
 
         public LogBaseInfo(String name, String url, String totalBytes) {
             this.name = name;
@@ -123,11 +121,16 @@ public class ApplicationWSParser {
 
         @Override
         public String toString() {
-            return "LogBaseInfo{" +
-                    "name='" + name + '\'' +
-                    ", url='" + url + '\'' +
-                    ", totalBytes=" + totalBytes +
-                    '}';
+            return "LogBaseInfo{"
+                    + "name='"
+                    + name
+                    + '\''
+                    + ", url='"
+                    + url
+                    + '\''
+                    + ", totalBytes="
+                    + totalBytes
+                    + '}';
         }
     }
 
@@ -136,9 +139,7 @@ public class ApplicationWSParser {
         List<LogBaseInfo> logs = Lists.newArrayList();
         String otherInfo;
 
-        public RollingBaseInfo() {
-
-        }
+        public RollingBaseInfo() {}
 
         public RollingBaseInfo(String typeName, List<LogBaseInfo> logs) {
             this.typeName = typeName;

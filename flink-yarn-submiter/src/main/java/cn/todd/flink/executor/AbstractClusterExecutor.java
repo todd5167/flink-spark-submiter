@@ -18,6 +18,13 @@
 
 package cn.todd.flink.executor;
 
+import org.apache.flink.api.common.JobID;
+import org.apache.flink.client.deployment.ClusterDescriptor;
+import org.apache.flink.client.deployment.ClusterRetrieveException;
+import org.apache.flink.client.program.ClusterClient;
+import org.apache.flink.client.program.ClusterClientProvider;
+import org.apache.flink.configuration.Configuration;
+
 import cn.todd.flink.entity.JobParamsInfo;
 import cn.todd.flink.enums.ETaskStatus;
 import cn.todd.flink.factory.YarnClusterClientFactory;
@@ -26,12 +33,6 @@ import cn.todd.flink.utils.JobGraphBuildUtil;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.flink.api.common.JobID;
-import org.apache.flink.client.deployment.ClusterDescriptor;
-import org.apache.flink.client.deployment.ClusterRetrieveException;
-import org.apache.flink.client.program.ClusterClient;
-import org.apache.flink.client.program.ClusterClientProvider;
-import org.apache.flink.configuration.Configuration;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.slf4j.Logger;
@@ -61,7 +62,6 @@ public abstract class AbstractClusterExecutor {
      */
     abstract Optional<Pair<String, String>> submit() throws Exception;
 
-
     public ETaskStatus getJobStatus(String appId, String jobId) throws Exception {
         ClusterClient clusterClient = retrieveClusterClient(appId);
         String webInterfaceURL = clusterClient.getWebInterfaceURL();
@@ -80,21 +80,24 @@ public abstract class AbstractClusterExecutor {
     }
 
     public ClusterClient retrieveClusterClient(String id) throws Exception {
-        //rewrite
+        // rewrite
         return null;
     }
 
-
     /**
-     *  job cancel
+     * job cancel
+     *
      * @param appId yarnApplicatonId
      * @param jobId flinkJobId
      * @throws ClusterRetrieveException
      */
     public void cancel(String appId, String jobId) throws ClusterRetrieveException {
         LOG.info("will cancel flink job ,appId is {},jobId is {}", appId, jobId);
-        Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
-        ClusterDescriptor clusterDescriptor = YarnClusterClientFactory.INSTANCE.createClusterDescriptor(jobParamsInfo.getYarnConfDir(), flinkConfiguration);
+        Configuration flinkConfiguration =
+                JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
+        ClusterDescriptor clusterDescriptor =
+                YarnClusterClientFactory.INSTANCE.createClusterDescriptor(
+                        jobParamsInfo.getYarnConfDir(), flinkConfiguration);
 
         //  get ClusterClient
         ApplicationId applicationId = ConverterUtils.toApplicationId(appId);
@@ -106,6 +109,4 @@ public abstract class AbstractClusterExecutor {
 
         LOG.info("success cancel job, applicationId:{},jobId:{}", appId, jobId);
     }
-
-
 }

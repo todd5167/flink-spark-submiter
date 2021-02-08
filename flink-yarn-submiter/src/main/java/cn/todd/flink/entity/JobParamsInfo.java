@@ -21,9 +21,7 @@ package cn.todd.flink.entity;
 import java.util.Properties;
 
 /**
- *
- *  任务执行依赖的参数配置
- *  Date: 2020/6/14
+ * 任务执行依赖的参数配置 Date: 2020/6/14
  *
  * @author todd5167
  */
@@ -42,9 +40,19 @@ public class JobParamsInfo {
     private Properties confProperties;
     private Properties yarnSessionConfProperties;
 
-    private JobParamsInfo(String name, String queue, String runJarPath, String flinkConfDir, String yarnConfDir,
-                          String[] execArgs, Properties confProperties, Properties yarnSessionConfProperties,
-                          String[] dependFile, String flinkJarPath, String runMode, String entryPointClassName) {
+    private JobParamsInfo(
+            String name,
+            String queue,
+            String runJarPath,
+            String flinkConfDir,
+            String yarnConfDir,
+            String[] execArgs,
+            Properties confProperties,
+            Properties yarnSessionConfProperties,
+            String[] dependFile,
+            String flinkJarPath,
+            String runMode,
+            String entryPointClassName) {
         this.name = name;
         this.queue = queue;
         this.runJarPath = runJarPath;
@@ -155,11 +163,11 @@ public class JobParamsInfo {
             return this;
         }
 
-        public JobParamsInfo.Builder setYarnSessionConfProperties(Properties yarnSessionConfProperties) {
+        public JobParamsInfo.Builder setYarnSessionConfProperties(
+                Properties yarnSessionConfProperties) {
             this.yarnSessionConfProperties = yarnSessionConfProperties;
             return this;
         }
-
 
         public JobParamsInfo.Builder setFlinkJarPath(String flinkJarPath) {
             this.flinkJarPath = flinkJarPath;
@@ -187,9 +195,19 @@ public class JobParamsInfo {
         }
 
         public JobParamsInfo build() {
-            return new JobParamsInfo(name, queue, runJarPath, flinkConfDir, yarnConfDir, execArgs,
-                    confProperties, yarnSessionConfProperties, dependFile, flinkJarPath, runMode, entryPointClassName);
+            return new JobParamsInfo(
+                    name,
+                    queue,
+                    runJarPath,
+                    flinkConfDir,
+                    yarnConfDir,
+                    execArgs,
+                    confProperties,
+                    yarnSessionConfProperties,
+                    dependFile,
+                    flinkJarPath,
+                    runMode,
+                    entryPointClassName);
         }
     }
-
 }

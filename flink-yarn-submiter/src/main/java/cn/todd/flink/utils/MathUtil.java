@@ -16,15 +16,13 @@
  * limitations under the License.
  */
 
-
 package cn.todd.flink.utils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
- *  Convert val to specified numeric type
- *  Date: 2020/6/14
+ * Convert val to specified numeric type Date: 2020/6/14
  *
  * @author todd5167
  */
@@ -75,7 +73,8 @@ public class MathUtil {
             return ((BigInteger) obj).intValue();
         }
 
-        throw new RuntimeException("not support type of " + obj.getClass() + " convert to Integer.");
+        throw new RuntimeException(
+                "not support type of " + obj.getClass() + " convert to Integer.");
     }
 
     public static Integer getIntegerVal(Object obj, int defaultVal) {
@@ -138,7 +137,6 @@ public class MathUtil {
         return getDoubleVal(obj);
     }
 
-
     public static Boolean getBoolean(Object obj) {
         if (obj == null) {
             return null;
@@ -150,7 +148,8 @@ public class MathUtil {
             return (Boolean) obj;
         }
 
-        throw new RuntimeException("not support type of " + obj.getClass() + " convert to Boolean.");
+        throw new RuntimeException(
+                "not support type of " + obj.getClass() + " convert to Boolean.");
     }
 
     public static Boolean getBoolean(Object obj, boolean defaultVal) {
@@ -214,8 +213,7 @@ public class MathUtil {
         } else if (obj instanceof Number) {
             return BigDecimal.valueOf(((Number) obj).doubleValue());
         }
-        throw new RuntimeException("not support type of " + obj.getClass() + " convert to BigDecimal.");
+        throw new RuntimeException(
+                "not support type of " + obj.getClass() + " convert to BigDecimal.");
     }
-
-
 }

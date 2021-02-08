@@ -20,6 +20,7 @@ package cn.todd.flink.entity;
 
 /**
  * Date: 2020/7/2
+ *
  * @author todd5167
  */
 public class TaskmanagerInfo {
@@ -32,10 +33,7 @@ public class TaskmanagerInfo {
     int freeSlots;
     Hardware hardware;
 
-
-    public TaskmanagerInfo() {
-
-    }
+    public TaskmanagerInfo() {}
 
     public String getId() {
         return id;
@@ -131,5 +129,4 @@ public class TaskmanagerInfo {
             this.managedMemory = managedMemory;
         }
     }
-
 }

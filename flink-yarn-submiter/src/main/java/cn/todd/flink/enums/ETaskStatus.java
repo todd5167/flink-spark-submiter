@@ -19,8 +19,8 @@
 package cn.todd.flink.enums;
 
 /**
- *
  * Date: 2020/7/15
+ *
  * @author todd5167
  */
 public enum ETaskStatus {
@@ -52,6 +52,4 @@ public enum ETaskStatus {
     SUSPENDED,
     //
     RECONCILING;
-
-
 }

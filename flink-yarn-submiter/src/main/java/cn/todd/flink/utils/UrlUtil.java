@@ -23,22 +23,25 @@ import java.util.regex.Pattern;
 
 /**
  * Date: 2020/6/15
+ *
  * @author todd5167
  */
 public class UrlUtil {
-    private static Pattern URLPattern = Pattern.compile("^(?:(http[s]?)://)?([^:/\\?]+)(?::(\\d+))?([^\\?]*)\\??(.*)");
+    private static Pattern URLPattern =
+            Pattern.compile("^(?:(http[s]?)://)?([^:/\\?]+)(?::(\\d+))?([^\\?]*)\\??(.*)");
 
-    public static String getHttpUrl(String node,String path){
-        return String.format("http://%s/%s", node,path);
+    public static String getHttpUrl(String node, String path) {
+        return String.format("http://%s/%s", node, path);
     }
 
     /**
      * 返回URL请求的 ${域名:port}部分
+     *
      * @return
      */
-    public static String getHttpRootURL(String url){
+    public static String getHttpRootURL(String url) {
         Matcher matcher = URLPattern.matcher(url);
-        if(!matcher.find()){
+        if (!matcher.find()) {
             throw new RuntimeException(String.format("url:%s is not regular HTTP_URL", url));
         }
 
@@ -46,16 +49,16 @@ public class UrlUtil {
         String hostName = matcher.group(2);
         String port = matcher.group(3);
 
-        if(port == null){
+        if (port == null) {
             return protocol + "://" + hostName;
-        }else{
+        } else {
             return protocol + "://" + hostName + ":" + port;
         }
     }
 
-
     /**
-     *  将url host使用占位符替换
+     * 将url host使用占位符替换
+     *
      * @param url
      * @return
      */
@@ -75,5 +78,4 @@ public class UrlUtil {
             return protocol + "://" + hostNamePlaceholder + ":" + port;
         }
     }
-
 }

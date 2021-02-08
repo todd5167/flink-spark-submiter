@@ -19,7 +19,8 @@
 package cn.todd.flink.enums;
 
 /**
- *  Flink任务运行模式
+ * Flink任务运行模式
+ *
  * @author todd5167
  */
 public enum ERunMode {
@@ -37,5 +38,4 @@ public enum ERunMode {
         }
         return valueOf(type.toUpperCase());
     }
-
 }

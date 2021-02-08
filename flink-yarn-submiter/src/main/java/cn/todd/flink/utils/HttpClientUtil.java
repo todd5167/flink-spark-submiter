@@ -18,9 +18,6 @@
 
 package cn.todd.flink.utils;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
@@ -37,8 +34,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+
 /**
  * Date: 2020/6/15
+ *
  * @author todd5167
  */
 public class HttpClientUtil {
@@ -50,35 +51,35 @@ public class HttpClientUtil {
     private static CloseableHttpClient httpClient = getHttpClient();
     private static Charset charset = Charset.forName("UTF-8");
 
-
     private static CloseableHttpClient getHttpClient() {
-        ConnectionSocketFactory plainsf = PlainConnectionSocketFactory
-                .getSocketFactory();
-        LayeredConnectionSocketFactory sslsf = SSLConnectionSocketFactory
-                .getSocketFactory();
-        Registry<ConnectionSocketFactory> registry = RegistryBuilder
-                .<ConnectionSocketFactory> create().register("http", plainsf)
-                .register("https", sslsf).build();
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(
-                registry);
+        ConnectionSocketFactory plainsf = PlainConnectionSocketFactory.getSocketFactory();
+        LayeredConnectionSocketFactory sslsf = SSLConnectionSocketFactory.getSocketFactory();
+        Registry<ConnectionSocketFactory> registry =
+                RegistryBuilder.<ConnectionSocketFactory>create()
+                        .register("http", plainsf)
+                        .register("https", sslsf)
+                        .build();
+        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
         cm.setMaxTotal(maxTotal);
         cm.setDefaultMaxPerRoute(maxPerRoute);
 
-        //设置请求和传输超时时间
-        RequestConfig requestConfig = RequestConfig.custom()
-                //setConnectionRequestTimeout：设置从connect Manager获取Connection 超时时间，单位毫秒。这个属性是新加的属性，因为目前版本是可以共享连接池的。
-                .setConnectionRequestTimeout(ConnectTimeout)
-                //setSocketTimeout：请求获取数据的超时时间，单位毫秒。 如果访问一个接口，多少时间内无法返回数据，就直接放弃此次调用。
-                .setSocketTimeout(SocketTimeout)
-                //setConnectTimeout：设置连接超时时间，单位毫秒。
-                .setConnectTimeout(ConnectTimeout)
-                .build();
+        // 设置请求和传输超时时间
+        RequestConfig requestConfig =
+                RequestConfig.custom()
+                        // setConnectionRequestTimeout：设置从connect Manager获取Connection
+                        // 超时时间，单位毫秒。这个属性是新加的属性，因为目前版本是可以共享连接池的。
+                        .setConnectionRequestTimeout(ConnectTimeout)
+                        // setSocketTimeout：请求获取数据的超时时间，单位毫秒。 如果访问一个接口，多少时间内无法返回数据，就直接放弃此次调用。
+                        .setSocketTimeout(SocketTimeout)
+                        // setConnectTimeout：设置连接超时时间，单位毫秒。
+                        .setConnectTimeout(ConnectTimeout)
+                        .build();
 
         return HttpClients.custom()
                 .setDefaultRequestConfig(requestConfig)
-                .setConnectionManager(cm).build();
+                .setConnectionManager(cm)
+                .build();
     }
-
 
     public static String getRequest(String url) throws IOException {
         String respBody = null;
@@ -94,7 +95,8 @@ public class HttpClientUtil {
 
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
                     throw new RuntimeException("404 error");
-                } else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+                } else if (response.getStatusLine().getStatusCode()
+                        == HttpStatus.SC_INTERNAL_SERVER_ERROR) {
                     throw new RuntimeException("500");
                 }
             }

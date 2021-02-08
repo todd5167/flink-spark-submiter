@@ -18,11 +18,6 @@
 
 package cn.todd.flink.executor;
 
-
-import cn.todd.flink.entity.JobParamsInfo;
-import cn.todd.flink.factory.YarnClusterClientFactory;
-import cn.todd.flink.utils.JobGraphBuildUtil;
-import org.apache.commons.math3.util.Pair;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.deployment.ClusterRetrieveException;
@@ -31,6 +26,11 @@ import org.apache.flink.client.program.ClusterClientProvider;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.util.Preconditions;
+
+import cn.todd.flink.entity.JobParamsInfo;
+import cn.todd.flink.factory.YarnClusterClientFactory;
+import cn.todd.flink.utils.JobGraphBuildUtil;
+import org.apache.commons.math3.util.Pair;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.slf4j.Logger;
@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-
 
 /**
  * Date: 2020/6/14
@@ -60,9 +59,10 @@ public class YarnSessionClusterExecutor extends AbstractClusterExecutor {
 
         Object yid = jobParamsInfo.getYarnSessionConfProperties().get("yid");
         ClusterClient clusterClient = retrieveClusterClient(yid.toString());
-        CompletableFuture completableFuture = clusterClient
-                .submitJob(jobGraph)
-                .whenComplete((ignored1, ignored2) -> clusterClient.close());
+        CompletableFuture completableFuture =
+                clusterClient
+                        .submitJob(jobGraph)
+                        .whenComplete((ignored1, ignored2) -> clusterClient.close());
 
         JobID jobID = (JobID) completableFuture.get();
         LOG.info("jobID:{}", jobID.toString());
@@ -75,8 +75,11 @@ public class YarnSessionClusterExecutor extends AbstractClusterExecutor {
         Preconditions.checkNotNull(yid, "yarnsession mode applicationId required!");
 
         ApplicationId applicationId = ConverterUtils.toApplicationId(yid.toString());
-        Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
-        ClusterDescriptor clusterDescriptor = YarnClusterClientFactory.INSTANCE.createClusterDescriptor(jobParamsInfo.getYarnConfDir(), flinkConfiguration);
+        Configuration flinkConfiguration =
+                JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
+        ClusterDescriptor clusterDescriptor =
+                YarnClusterClientFactory.INSTANCE.createClusterDescriptor(
+                        jobParamsInfo.getYarnConfDir(), flinkConfiguration);
 
         ClusterClientProvider<ApplicationId> retrieve = clusterDescriptor.retrieve(applicationId);
         ClusterClient<ApplicationId> clusterClient = retrieve.getClusterClient();

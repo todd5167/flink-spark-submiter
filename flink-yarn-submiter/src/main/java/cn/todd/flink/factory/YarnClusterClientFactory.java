@@ -18,7 +18,6 @@
 
 package cn.todd.flink.factory;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
@@ -29,6 +28,8 @@ import org.apache.flink.util.FileUtils;
 import org.apache.flink.util.function.FunctionUtils;
 import org.apache.flink.yarn.YarnClientYarnClusterInformationRetriever;
 import org.apache.flink.yarn.YarnClusterDescriptor;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 
@@ -37,20 +38,19 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
-
 /**
- *
  * Date: 2020/6/14
+ *
  * @author todd5167
  */
-
 public enum YarnClusterClientFactory implements AbstractClusterClientFactory {
     INSTANCE;
 
     private static final String XML_FILE_EXTENSION = "xml";
 
     @Override
-    public ClusterDescriptor createClusterDescriptor(String yarnConfDir, Configuration flinkConfig) {
+    public ClusterDescriptor createClusterDescriptor(
+            String yarnConfDir, Configuration flinkConfig) {
 
         if (StringUtils.isNotBlank(yarnConfDir)) {
             try {
@@ -62,12 +62,13 @@ public enum YarnClusterClientFactory implements AbstractClusterClientFactory {
                 YarnConfiguration yarnConf = getYarnConf(yarnConfDir);
                 YarnClient yarnClient = createYarnClient(yarnConf);
 
-                YarnClusterDescriptor clusterDescriptor = new YarnClusterDescriptor(
-                        flinkConfig,
-                        yarnConf,
-                        yarnClient,
-                        YarnClientYarnClusterInformationRetriever.create(yarnClient),
-                        false);
+                YarnClusterDescriptor clusterDescriptor =
+                        new YarnClusterDescriptor(
+                                flinkConfig,
+                                yarnConf,
+                                yarnClient,
+                                YarnClientYarnClusterInformationRetriever.create(yarnClient),
+                                false);
 
                 return clusterDescriptor;
             } catch (Exception e) {
@@ -80,8 +81,7 @@ public enum YarnClusterClientFactory implements AbstractClusterClientFactory {
 
     public YarnConfiguration getYarnConf(String yarnConfDir) throws IOException {
         YarnConfiguration yarnConf = new YarnConfiguration();
-        FileUtils.listFilesInDirectory(new File(yarnConfDir).toPath(), this::isXmlFile)
-                .stream()
+        FileUtils.listFilesInDirectory(new File(yarnConfDir).toPath(), this::isXmlFile).stream()
                 .map(FunctionUtils.uncheckedFunction(FileUtils::toURL))
                 .forEach(yarnConf::addResource);
 
@@ -102,27 +102,30 @@ public enum YarnClusterClientFactory implements AbstractClusterClientFactory {
         return createYarnClient(yarnConf);
     }
 
-    /**
-     * deal yarn HA conf
-     */
-    private org.apache.hadoop.conf.Configuration haYarnConf(org.apache.hadoop.conf.Configuration yarnConf) {
+    /** deal yarn HA conf */
+    private org.apache.hadoop.conf.Configuration haYarnConf(
+            org.apache.hadoop.conf.Configuration yarnConf) {
         Iterator<Map.Entry<String, String>> iterator = yarnConf.iterator();
-        iterator.forEachRemaining((Map.Entry<String, String> entry) -> {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (key.startsWith("yarn.resourcemanager.hostname.")) {
-                String rm = key.substring("yarn.resourcemanager.hostname.".length());
-                String addressKey = "yarn.resourcemanager.address." + rm;
-                if (yarnConf.get(addressKey) == null) {
-                    yarnConf.set(addressKey, value + ":" + YarnConfiguration.DEFAULT_RM_PORT);
-                }
-            }
-        });
+        iterator.forEachRemaining(
+                (Map.Entry<String, String> entry) -> {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    if (key.startsWith("yarn.resourcemanager.hostname.")) {
+                        String rm = key.substring("yarn.resourcemanager.hostname.".length());
+                        String addressKey = "yarn.resourcemanager.address." + rm;
+                        if (yarnConf.get(addressKey) == null) {
+                            yarnConf.set(
+                                    addressKey, value + ":" + YarnConfiguration.DEFAULT_RM_PORT);
+                        }
+                    }
+                });
 
         return yarnConf;
     }
 
     private boolean isXmlFile(java.nio.file.Path file) {
-        return XML_FILE_EXTENSION.equals(org.apache.flink.shaded.guava18.com.google.common.io.Files.getFileExtension(file.toString()));
+        return XML_FILE_EXTENSION.equals(
+                org.apache.flink.shaded.guava18.com.google.common.io.Files.getFileExtension(
+                        file.toString()));
     }
 }

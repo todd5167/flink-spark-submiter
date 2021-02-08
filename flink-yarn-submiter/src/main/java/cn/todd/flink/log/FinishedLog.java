@@ -18,10 +18,11 @@
 
 package cn.todd.flink.log;
 
+import org.apache.flink.util.Preconditions;
+
 import cn.todd.flink.entity.JobParamsInfo;
 import cn.todd.flink.factory.YarnClusterClientFactory;
 import org.apache.commons.lang.StringUtils;
-import org.apache.flink.util.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileStatus;
@@ -47,32 +48,42 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 /**
- *  print all contains logs info
+ * print all contains logs info
  *
- *  @see  LogCLIHelpers
+ * @see LogCLIHelpers
  * @author todd5167
  */
 public class FinishedLog {
     private static final Logger LOG = LoggerFactory.getLogger(FinishedLog.class);
 
-    public void printAllContainersLogs(JobParamsInfo jobParamsInfo, String applicationId) throws IOException {
-        YarnConfiguration configuration = YarnClusterClientFactory.INSTANCE.getYarnConf(jobParamsInfo.getYarnConfDir());
+    public void printAllContainersLogs(JobParamsInfo jobParamsInfo, String applicationId)
+            throws IOException {
+        YarnConfiguration configuration =
+                YarnClusterClientFactory.INSTANCE.getYarnConf(jobParamsInfo.getYarnConfDir());
 
-        Path remoteRootLogDir = new Path(configuration.get(YarnConfiguration.NM_REMOTE_APP_LOG_DIR, YarnConfiguration.DEFAULT_NM_REMOTE_APP_LOG_DIR));
+        Path remoteRootLogDir =
+                new Path(
+                        configuration.get(
+                                YarnConfiguration.NM_REMOTE_APP_LOG_DIR,
+                                YarnConfiguration.DEFAULT_NM_REMOTE_APP_LOG_DIR));
         ApplicationId appId = ConverterUtils.toApplicationId(applicationId);
         // HADOOP_USER_NAME
         String user = UserGroupInformation.getCurrentUser().getShortUserName();
         String logDirSuffix = LogAggregationUtils.getRemoteNodeLogDirSuffix(configuration);
 
-        Path remoteAppLogDir = LogAggregationUtils.getRemoteAppLogDir(remoteRootLogDir, appId, user, logDirSuffix);
+        Path remoteAppLogDir =
+                LogAggregationUtils.getRemoteAppLogDir(remoteRootLogDir, appId, user, logDirSuffix);
 
         long logFileSize = getLogFileSize(configuration, remoteAppLogDir.toString());
         Preconditions.checkArgument(logFileSize > 0, "log file size =0");
 
         RemoteIterator<FileStatus> nodeFiles = null;
         try {
-            Path qualifiedLogDir = FileContext.getFileContext(configuration).makeQualified(remoteAppLogDir);
-            nodeFiles = FileContext.getFileContext(qualifiedLogDir.toUri(), configuration).listStatus(remoteAppLogDir);
+            Path qualifiedLogDir =
+                    FileContext.getFileContext(configuration).makeQualified(remoteAppLogDir);
+            nodeFiles =
+                    FileContext.getFileContext(qualifiedLogDir.toUri(), configuration)
+                            .listStatus(remoteAppLogDir);
         } catch (FileNotFoundException fnf) {
             logDirNotExist(remoteAppLogDir.toString());
         }
@@ -81,7 +92,8 @@ public class FinishedLog {
         while (nodeFiles.hasNext()) {
             FileStatus thisNodeFile = nodeFiles.next();
             if (!thisNodeFile.getPath().getName().endsWith(LogAggregationUtils.TMP_FILE_SUFFIX)) {
-                AggregatedLogFormat.LogReader reader = new AggregatedLogFormat.LogReader(configuration, thisNodeFile.getPath());
+                AggregatedLogFormat.LogReader reader =
+                        new AggregatedLogFormat.LogReader(configuration, thisNodeFile.getPath());
                 try {
                     DataInputStream valueStream;
                     AggregatedLogFormat.LogKey key = new AggregatedLogFormat.LogKey();
@@ -94,7 +106,10 @@ public class FinishedLog {
                         System.out.println(StringUtils.repeat("=", containerString.length()));
                         while (true) {
                             try {
-                                AggregatedLogFormat.LogReader.readAContainerLogsForALogType(valueStream, System.out, thisNodeFile.getModificationTime());
+                                AggregatedLogFormat.LogReader.readAContainerLogsForALogType(
+                                        valueStream,
+                                        System.out,
+                                        thisNodeFile.getModificationTime());
                                 foundAnyLogs = true;
                             } catch (EOFException eof) {
                                 break;
@@ -112,22 +127,32 @@ public class FinishedLog {
         if (!foundAnyLogs) {
             emptyLogDir(remoteAppLogDir.toString());
         }
-
     }
 
-    public void printLogsByContainerId(JobParamsInfo jobParamsInfo, String applicationId, String containerId, String nodeId) throws IOException {
-        YarnConfiguration configuration = YarnClusterClientFactory.INSTANCE.getYarnConf(jobParamsInfo.getYarnConfDir());
+    public void printLogsByContainerId(
+            JobParamsInfo jobParamsInfo, String applicationId, String containerId, String nodeId)
+            throws IOException {
+        YarnConfiguration configuration =
+                YarnClusterClientFactory.INSTANCE.getYarnConf(jobParamsInfo.getYarnConfDir());
 
-        Path remoteRootLogDir = new Path(configuration.get(YarnConfiguration.NM_REMOTE_APP_LOG_DIR, YarnConfiguration.DEFAULT_NM_REMOTE_APP_LOG_DIR));
+        Path remoteRootLogDir =
+                new Path(
+                        configuration.get(
+                                YarnConfiguration.NM_REMOTE_APP_LOG_DIR,
+                                YarnConfiguration.DEFAULT_NM_REMOTE_APP_LOG_DIR));
         ApplicationId appId = ConverterUtils.toApplicationId(applicationId);
         String user = UserGroupInformation.getCurrentUser().getShortUserName();
         String logDirSuffix = LogAggregationUtils.getRemoteNodeLogDirSuffix(configuration);
 
-        Path remoteAppLogDir = LogAggregationUtils.getRemoteAppLogDir(remoteRootLogDir, appId, user, logDirSuffix);
+        Path remoteAppLogDir =
+                LogAggregationUtils.getRemoteAppLogDir(remoteRootLogDir, appId, user, logDirSuffix);
         RemoteIterator<FileStatus> nodeFiles = null;
         try {
-            Path qualifiedLogDir = FileContext.getFileContext(configuration).makeQualified(remoteAppLogDir);
-            nodeFiles = FileContext.getFileContext(qualifiedLogDir.toUri(), configuration).listStatus(remoteAppLogDir);
+            Path qualifiedLogDir =
+                    FileContext.getFileContext(configuration).makeQualified(remoteAppLogDir);
+            nodeFiles =
+                    FileContext.getFileContext(qualifiedLogDir.toUri(), configuration)
+                            .listStatus(remoteAppLogDir);
         } catch (FileNotFoundException fnf) {
             logDirNotExist(remoteAppLogDir.toString());
         }
@@ -136,11 +161,19 @@ public class FinishedLog {
         while (nodeFiles.hasNext()) {
             FileStatus thisNodeFile = nodeFiles.next();
             String fileName = thisNodeFile.getPath().getName();
-            if (fileName.contains(LogAggregationUtils.getNodeString(nodeId)) && !fileName.endsWith(LogAggregationUtils.TMP_FILE_SUFFIX)) {
+            if (fileName.contains(LogAggregationUtils.getNodeString(nodeId))
+                    && !fileName.endsWith(LogAggregationUtils.TMP_FILE_SUFFIX)) {
                 AggregatedLogFormat.LogReader reader = null;
                 try {
-                    reader = new AggregatedLogFormat.LogReader(configuration, thisNodeFile.getPath());
-                    if (dumpAContainerLogs(containerId, reader, System.out, thisNodeFile.getModificationTime()) > -1) {
+                    reader =
+                            new AggregatedLogFormat.LogReader(
+                                    configuration, thisNodeFile.getPath());
+                    if (dumpAContainerLogs(
+                                    containerId,
+                                    reader,
+                                    System.out,
+                                    thisNodeFile.getModificationTime())
+                            > -1) {
                         foundContainerLogs = true;
                     }
                 } finally {
@@ -155,7 +188,12 @@ public class FinishedLog {
         }
     }
 
-    public int dumpAContainerLogs(String containerIdStr, AggregatedLogFormat.LogReader reader, PrintStream out, long logUploadedTime) throws IOException {
+    public int dumpAContainerLogs(
+            String containerIdStr,
+            AggregatedLogFormat.LogReader reader,
+            PrintStream out,
+            long logUploadedTime)
+            throws IOException {
         DataInputStream valueStream;
         AggregatedLogFormat.LogKey key = new AggregatedLogFormat.LogKey();
         valueStream = reader.next(key);
@@ -173,7 +211,8 @@ public class FinishedLog {
         boolean foundContainerLogs = false;
         while (true) {
             try {
-                AggregatedLogFormat.LogReader.readAContainerLogsForALogType(valueStream, out, logUploadedTime);
+                AggregatedLogFormat.LogReader.readAContainerLogsForALogType(
+                        valueStream, out, logUploadedTime);
                 foundContainerLogs = true;
             } catch (EOFException eof) {
                 break;
@@ -185,8 +224,8 @@ public class FinishedLog {
         return -1;
     }
 
-
-    private long getLogFileSize(Configuration yarnConfiguration, String tableLocation) throws IOException {
+    private long getLogFileSize(Configuration yarnConfiguration, String tableLocation)
+            throws IOException {
         Path inputPath = new Path(tableLocation);
         Configuration conf = new JobConf(yarnConfiguration);
         FileSystem fs = FileSystem.get(conf);
@@ -207,8 +246,7 @@ public class FinishedLog {
     }
 
     private static void containerLogNotFound(String containerId) {
-        System.out.println("Logs for container " + containerId
-                + " are not present in this log-file.");
+        System.out.println(
+                "Logs for container " + containerId + " are not present in this log-file.");
     }
-
 }

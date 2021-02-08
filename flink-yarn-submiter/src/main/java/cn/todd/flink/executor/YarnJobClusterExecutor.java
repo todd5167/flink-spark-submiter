@@ -18,13 +18,6 @@
 
 package cn.todd.flink.executor;
 
-import cn.todd.flink.entity.JobParamsInfo;
-import cn.todd.flink.enums.ETaskStatus;
-import cn.todd.flink.factory.YarnClusterClientFactory;
-import cn.todd.flink.utils.JobGraphBuildUtil;
-import org.apache.commons.compress.utils.Lists;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.client.program.ClusterClientProvider;
 import org.apache.flink.configuration.Configuration;
@@ -34,6 +27,14 @@ import org.apache.flink.util.Preconditions;
 import org.apache.flink.yarn.YarnClusterDescriptor;
 import org.apache.flink.yarn.configuration.YarnConfigOptions;
 import org.apache.flink.yarn.configuration.YarnConfigOptionsInternal;
+
+import cn.todd.flink.entity.JobParamsInfo;
+import cn.todd.flink.enums.ETaskStatus;
+import cn.todd.flink.factory.YarnClusterClientFactory;
+import cn.todd.flink.utils.JobGraphBuildUtil;
+import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
@@ -52,12 +53,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- *
  * Date: 2020/6/14
+ *
  * @author todd5167
  */
-
-public class YarnJobClusterExecutor extends AbstractClusterExecutor{
+public class YarnJobClusterExecutor extends AbstractClusterExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(YarnJobClusterExecutor.class);
 
     private static final String CONFIG_FILE_LOGBACK_NAME = "logback.xml";
@@ -74,19 +74,25 @@ public class YarnJobClusterExecutor extends AbstractClusterExecutor{
         Optional.ofNullable(jobParamsInfo.getDependFile())
                 .ifPresent(files -> JobGraphBuildUtil.fillDependFilesJobGraph(jobGraph, files));
 
-        Configuration flinkConfiguration = JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
+        Configuration flinkConfiguration =
+                JobGraphBuildUtil.getFlinkConfiguration(jobParamsInfo.getFlinkConfDir());
         appendApplicationConfig(flinkConfiguration, jobParamsInfo);
 
-        YarnClusterDescriptor clusterDescriptor = (YarnClusterDescriptor) YarnClusterClientFactory.INSTANCE
-                .createClusterDescriptor(jobParamsInfo.getYarnConfDir(), flinkConfiguration);
+        YarnClusterDescriptor clusterDescriptor =
+                (YarnClusterDescriptor)
+                        YarnClusterClientFactory.INSTANCE.createClusterDescriptor(
+                                jobParamsInfo.getYarnConfDir(), flinkConfiguration);
 
         List<File> shipFiles = findFlinkDistJar(jobParamsInfo.getFlinkJarPath(), clusterDescriptor);
         clusterDescriptor.addShipFiles(shipFiles);
 
-        ClusterSpecification clusterSpecification = YarnClusterClientFactory.INSTANCE.getClusterSpecification(flinkConfiguration);
-        ClusterClientProvider<ApplicationId> applicationIdClusterClientProvider = clusterDescriptor.deployJobCluster(clusterSpecification, jobGraph, true);
+        ClusterSpecification clusterSpecification =
+                YarnClusterClientFactory.INSTANCE.getClusterSpecification(flinkConfiguration);
+        ClusterClientProvider<ApplicationId> applicationIdClusterClientProvider =
+                clusterDescriptor.deployJobCluster(clusterSpecification, jobGraph, true);
 
-        String applicationId = applicationIdClusterClientProvider.getClusterClient().getClusterId().toString();
+        String applicationId =
+                applicationIdClusterClientProvider.getClusterClient().getClusterId().toString();
         String jobId = jobGraph.getJobID().toString();
 
         LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, jobId);
@@ -119,7 +125,8 @@ public class YarnJobClusterExecutor extends AbstractClusterExecutor{
                 case RUNNING:
                     return ETaskStatus.RUNNING;
                 case FINISHED:
-                    FinalApplicationStatus finalApplicationStatus = report.getFinalApplicationStatus();
+                    FinalApplicationStatus finalApplicationStatus =
+                            report.getFinalApplicationStatus();
                     if (finalApplicationStatus == FinalApplicationStatus.FAILED) {
                         return ETaskStatus.FAILED;
                     } else if (finalApplicationStatus == FinalApplicationStatus.SUCCEEDED) {
@@ -153,17 +160,23 @@ public class YarnJobClusterExecutor extends AbstractClusterExecutor{
         }
 
         if (!StringUtils.isEmpty(jobParamsInfo.getFlinkConfDir())) {
-            discoverLogConfigFile(jobParamsInfo.getFlinkConfDir()).ifPresent(file ->
-                    flinkConfig.setString(YarnConfigOptionsInternal.APPLICATION_LOG_CONFIG_FILE, file.getPath()));
+            discoverLogConfigFile(jobParamsInfo.getFlinkConfDir())
+                    .ifPresent(
+                            file ->
+                                    flinkConfig.setString(
+                                            YarnConfigOptionsInternal.APPLICATION_LOG_CONFIG_FILE,
+                                            file.getPath()));
         }
 
         if (!flinkConfig.contains(TaskManagerOptions.TOTAL_PROCESS_MEMORY)) {
-            flinkConfig.setString(TaskManagerOptions.TOTAL_PROCESS_MEMORY.key(), DEFAULT_TOTAL_PROCESS_MEMORY);
+            flinkConfig.setString(
+                    TaskManagerOptions.TOTAL_PROCESS_MEMORY.key(), DEFAULT_TOTAL_PROCESS_MEMORY);
         }
     }
 
-
-    private List<File> findFlinkDistJar(String flinkJarPath, YarnClusterDescriptor clusterDescriptor) throws MalformedURLException {
+    private List<File> findFlinkDistJar(
+            String flinkJarPath, YarnClusterDescriptor clusterDescriptor)
+            throws MalformedURLException {
         if (StringUtils.isEmpty(flinkJarPath) || !new File(flinkJarPath).exists()) {
             throw new RuntimeException("The param '-flinkJarPath' ref dir is not exist");
         }
@@ -182,21 +195,25 @@ public class YarnJobClusterExecutor extends AbstractClusterExecutor{
     private Optional<File> discoverLogConfigFile(final String configurationDirectory) {
         Optional<File> logConfigFile = Optional.empty();
 
-        final File log4jFile = new File(configurationDirectory + File.separator + CONFIG_FILE_LOG4J_NAME);
+        final File log4jFile =
+                new File(configurationDirectory + File.separator + CONFIG_FILE_LOG4J_NAME);
         if (log4jFile.exists()) {
             logConfigFile = Optional.of(log4jFile);
         }
 
-        final File logbackFile = new File(configurationDirectory + File.separator + CONFIG_FILE_LOGBACK_NAME);
+        final File logbackFile =
+                new File(configurationDirectory + File.separator + CONFIG_FILE_LOGBACK_NAME);
         if (logbackFile.exists()) {
             if (logConfigFile.isPresent()) {
-                LOG.warn("The configuration directory ('" + configurationDirectory + "') already contains a LOG4J config file." +
-                        "If you want to use logback, then please delete or rename the log configuration file.");
+                LOG.warn(
+                        "The configuration directory ('"
+                                + configurationDirectory
+                                + "') already contains a LOG4J config file."
+                                + "If you want to use logback, then please delete or rename the log configuration file.");
             } else {
                 logConfigFile = Optional.of(logbackFile);
             }
         }
         return logConfigFile;
     }
-
 }

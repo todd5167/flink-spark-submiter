@@ -25,15 +25,16 @@ import org.apache.flink.configuration.Configuration;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- *
  * Date: 2020/6/14
+ *
  * @author todd5167
  */
 public enum StandaloneClientFactory implements AbstractClusterClientFactory {
     INSTANCE;
 
     @Override
-    public ClusterDescriptor createClusterDescriptor(String clusterConfPath, Configuration flinkConfig) {
+    public ClusterDescriptor createClusterDescriptor(
+            String clusterConfPath, Configuration flinkConfig) {
         checkNotNull(flinkConfig);
         return new StandaloneClusterDescriptor(flinkConfig);
     }
