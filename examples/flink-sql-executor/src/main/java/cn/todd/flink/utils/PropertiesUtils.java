@@ -15,16 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.todd.flink;
 
-import cn.todd.flink.executor.SqlExecutor;
-import cn.todd.flink.parser.ParamsInfo;
-import cn.todd.flink.parser.ParamsParser;
 
-public class Main {
-    public static void main(String[] args) throws Exception {
-        ParamsInfo paramsInfo = ParamsParser.parseParams(args);
-        SqlExecutor submit = new SqlExecutor(paramsInfo);
-        submit.run();
+package cn.todd.flink.utils;
+
+import java.util.Properties;
+
+public class PropertiesUtils {
+    public static Properties propertiesTrim(Properties confProperties) {
+        Properties properties = new Properties();
+        confProperties.forEach(
+                (k, v) -> {
+                    properties.put(k.toString().trim(), v.toString().trim());
+                }
+        );
+        return properties;
     }
 }

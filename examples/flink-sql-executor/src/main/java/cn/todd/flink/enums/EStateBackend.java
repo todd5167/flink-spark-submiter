@@ -15,16 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.todd.flink;
 
-import cn.todd.flink.executor.SqlExecutor;
-import cn.todd.flink.parser.ParamsInfo;
-import cn.todd.flink.parser.ParamsParser;
+package cn.todd.flink.enums;
 
-public class Main {
-    public static void main(String[] args) throws Exception {
-        ParamsInfo paramsInfo = ParamsParser.parseParams(args);
-        SqlExecutor submit = new SqlExecutor(paramsInfo);
-        submit.run();
+/**
+ * @Description
+ * @Date 2021/2/18 7:51 PM
+ * @Author todd5167
+ */
+public enum EStateBackend {
+    /**
+     * memory
+     */
+    MEMORY,
+    /**
+     * rockdb
+     */
+    ROCKSDB,
+    /**
+     * filesystem
+     */
+    FILESYSTEM;
+
+    public static EStateBackend convertFromString(String type) {
+        if (type == null) {
+            throw new RuntimeException("null StateBackend!");
+        }
+        return valueOf(type.toUpperCase());
     }
 }
+
+

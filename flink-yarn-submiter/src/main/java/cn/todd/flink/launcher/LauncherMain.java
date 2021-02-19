@@ -146,13 +146,48 @@ public class LauncherMain {
         // "/Users/maqi/tmp/hadoopconf/cdh514/krb5.conf");
         // 可执行jar包路径
         String runJarPath =
+                //
+                // "/Users/tal/code/flink-spark-submiter/exampleJars/flink-sql-executor/flink-sql-executor.jar";
                 "/Users/tal/code/flink-spark-submiter/exampleJars/flink-sql-executor/flink-sql-executor.jar";
         // 任务参数
+        //        String[] execArgs = new String[]{"-jobName", "flink110Submit", "--topic",
+        // "mqTest01", "--bootstrapServers", "172.16.8.107:9092"};
         String[] execArgs =
                 new String[] {
-                    "-sqlFilePath",
-                    "/Users/tal/code/flink-spark-submiter/examples/flink-sql-executor/src/main/resources/sql/gen-console.sql"
+                    "--sqlText",
+                    "CREATE TABLE source_table (\n"
+                            + "   id INT,\n"
+                            + "   score INT,\n"
+                            + "   address STRING\n"
+                            + ") WITH (\n"
+                            + "    'connector'='randomdata',\n"
+                            + "    'rows-per-second'='5',\n"
+                            + "    'fields.id.kind'='sequence',\n"
+                            + "    'fields.id.start'='1',\n"
+                            + "    'fields.id.end'='100000',\n"
+                            + "    'fields.score.min'='1',\n"
+                            + "    'fields.score.max'='100',\n"
+                            + "    'fields.address.length'='10'\n"
+                            + ");\n"
+                            + "\n"
+                            + "CREATE TABLE console_table (\n"
+                            + "     id INT,\n"
+                            + "     score INT,\n"
+                            + "     address STRING\n"
+                            + ") WITH (\n"
+                            + "    'connector' = 'console'\n"
+                            + ");\n"
+                            + "\n"
+                            + "CREATE VIEW viewTable\n"
+                            + "  AS\n"
+                            + "  select id, score, address from source_table;\n"
+                            + "\n"
+                            + "insert into console_table\n"
+                            + "  SELECT * FROM viewTable;",
+                    "--confProp",
+                    "{\"sql.env.parallelism\":5}"
                 };
+
         // 任务名称
         String jobName = "Flink perjob submit";
         // flink 文件夹路径

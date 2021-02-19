@@ -15,16 +15,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.todd.flink;
 
-import cn.todd.flink.executor.SqlExecutor;
-import cn.todd.flink.parser.ParamsInfo;
-import cn.todd.flink.parser.ParamsParser;
+package cn.todd.flink.parser;
 
-public class Main {
-    public static void main(String[] args) throws Exception {
-        ParamsInfo paramsInfo = ParamsParser.parseParams(args);
-        SqlExecutor submit = new SqlExecutor(paramsInfo);
-        submit.run();
+import java.util.Properties;
+
+/**
+ * @Description
+ * @Date 2021/2/18 7:51 PM
+ * @Author todd5167
+ */
+public class ParamsInfo {
+    private String sqlText;
+    private Properties confProp;
+
+    public ParamsInfo(
+            String sqlText,
+            Properties confProp) {
+        this.sqlText = sqlText;
+        this.confProp = confProp;
+    }
+
+
+    public String getSqlText() {
+        return sqlText;
+    }
+
+    public Properties getConfProp() {
+        return confProp;
+    }
+
+    @Override
+    public String toString() {
+        return "ParamsInfo{" +
+                "sqlText='" + sqlText + '\'' +
+                ", confProp=" + confProp +
+                '}';
     }
 }

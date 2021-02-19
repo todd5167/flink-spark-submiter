@@ -16,58 +16,72 @@
  * limitations under the License.
  */
 
-package cn.todd.flink.runner;
+package cn.todd.flink.executor;
 
-import cn.todd.flink.runner.SqlCommandParser.SqlCommandCall;
+import cn.todd.flink.config.StreamEnvConfigManager;
+import cn.todd.flink.parser.ParamsInfo;
+import cn.todd.flink.parser.SqlCommandParser;
+import cn.todd.flink.parser.SqlCommandParser.SqlCommandCall;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.SqlParserException;
+import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author todd5167
  */
-public class SqlRunner {
-
+public class SqlExecutor {
     // --------------------------------------------------------------------------------------------
+    private final ParamsInfo paramsInfo;
+    private TableEnvironment tableEnvironment;
 
-    private String sqlFilePath;
-    private TableEnvironment tEnv;
-
-    public SqlRunner(String sqlFilePath) {
-        this.sqlFilePath = sqlFilePath;
+    public SqlExecutor(ParamsInfo paramsInfo) {
+        this.paramsInfo = paramsInfo;
     }
 
     public void run() throws Exception {
+        tableEnvironment = getStreamTableEnv(paramsInfo.getConfProp());
+        List<SqlCommandCall> calls = SqlCommandParser.parseSqlText(paramsInfo.getSqlText());
+        calls.stream().forEach(this::callCommand);
+    }
+
+
+    public static StreamTableEnvironment getStreamTableEnv(Properties confProperties)
+            throws NoSuchMethodException, IOException, IllegalAccessException, InvocationTargetException {
+        // build stream exec env
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        EnvironmentSettings envSettings = EnvironmentSettings.newInstance()
+        StreamEnvConfigManager.streamExecutionEnvironmentConfig(env, confProperties);
+
+        // use blink and stream mode
+        EnvironmentSettings settings = EnvironmentSettings.newInstance()
                 .useBlinkPlanner()
                 .inStreamingMode()
                 .build();
-
-        tEnv = StreamTableEnvironment.create(env, envSettings);
-
-        List<String> sql = Files.readAllLines(Paths.get(sqlFilePath));
-        List<SqlCommandCall> calls = SqlCommandParser.parse(sql);
-        calls.stream().forEach(this::callCommand);
-
-        env.execute("flink-sql-executor");
+        StreamTableEnvironment tableEnv = StreamTableEnvironmentImpl.create(env, settings, new TableConfig());
+        StreamEnvConfigManager.streamTableEnvironmentStateTTLConfig(tableEnv, confProperties);
+        StreamEnvConfigManager.streamTableEnvironmentEarlyTriggerConfig(tableEnv, confProperties);
+        return tableEnv;
     }
 
+
     // --------------------------------------------------------------------------------------------
-    // TODO SUPPORT CREATE VIEW , FUNCTION
+    // TODO SUPPORT FUNCTION
     private void callCommand(SqlCommandCall cmdCall) {
         switch (cmdCall.command) {
             case SET:
                 callSet(cmdCall);
                 break;
             case CREATE_TABLE:
-                callCreateTable(cmdCall);
+            case CREATE_VIEW:
+                callCreateTableOrView(cmdCall);
                 break;
             case INSERT_INTO:
                 callInsertInto(cmdCall);
@@ -80,13 +94,13 @@ public class SqlRunner {
     private void callSet(SqlCommandCall cmdCall) {
         String key = cmdCall.operands[0];
         String value = cmdCall.operands[1];
-        tEnv.getConfig().getConfiguration().setString(key, value);
+        tableEnvironment.getConfig().getConfiguration().setString(key, value);
     }
 
-    private void callCreateTable(SqlCommandCall cmdCall) {
+    private void callCreateTableOrView(SqlCommandCall cmdCall) {
         String ddl = cmdCall.operands[0];
         try {
-            tEnv.executeSql(ddl);
+            tableEnvironment.executeSql(ddl);
         } catch (SqlParserException e) {
             throw new RuntimeException("SQL parse failed:\n" + ddl + "\n", e);
         }
@@ -95,7 +109,7 @@ public class SqlRunner {
     private void callInsertInto(SqlCommandCall cmdCall) {
         String dml = cmdCall.operands[0];
         try {
-            tEnv.executeSql(dml);
+            tableEnvironment.executeSql(dml);
         } catch (SqlParserException e) {
             throw new RuntimeException("SQL parse failed:\n" + dml + "\n", e);
         }

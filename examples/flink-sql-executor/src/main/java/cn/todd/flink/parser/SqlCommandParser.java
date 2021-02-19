@@ -16,9 +16,16 @@
  * limitations under the License.
  */
 
-package cn.todd.flink.runner;
+package cn.todd.flink.parser;
 
-import java.util.*;
+import cn.todd.flink.utils.TalStringUtil;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,43 +33,37 @@ import java.util.regex.Pattern;
 /**
  * Simple parser for determining the type of command and its parameters.
  */
-public final class SqlCommandParser {
+public class SqlCommandParser {
 
-    private SqlCommandParser() {
-        // private
-    }
+    private static final char SQL_DELIMITER = ';';
 
-    public static List<SqlCommandCall> parse(List<String> lines) {
+    public static List<SqlCommandCall> parseSqlText(String sql) {
+        sql = TalStringUtil.dealSqlComment(sql)
+                .replaceAll("\r\n", " ")
+                .replaceAll("\n", " ")
+                .replace("\t", " ")
+                .trim();
+        List<String> lines = TalStringUtil.splitIgnoreQuota(sql, SQL_DELIMITER);
         List<SqlCommandCall> calls = new ArrayList<>();
-        StringBuilder stmt = new StringBuilder();
+
         for (String line : lines) {
-            if (line.trim().isEmpty() || line.startsWith("--")) {
-                // skip empty line and comment line
+            if (StringUtils.isEmpty(line)) {
                 continue;
             }
-            stmt.append("\n").append(line);
-            if (line.trim().endsWith(";")) {
-                Optional<SqlCommandCall> optionalCall = parse(stmt.toString());
-                if (optionalCall.isPresent()) {
-                    calls.add(optionalCall.get());
-                } else {
-                    throw new RuntimeException("Unsupported command '" + stmt.toString() + "'");
-                }
-                // clear string builder
-                stmt.setLength(0);
+            Optional<SqlCommandCall> optionalCall = parse(line.toString());
+            if (optionalCall.isPresent()) {
+                calls.add(optionalCall.get());
+            } else {
+                throw new RuntimeException("Unsupported command '" + line.toString() + "'");
             }
         }
         return calls;
     }
 
+
     public static Optional<SqlCommandCall> parse(String stmt) {
         // normalize
         stmt = stmt.trim();
-        // remove ';' at the end
-        if (stmt.endsWith(";")) {
-            stmt = stmt.substring(0, stmt.length() - 1).trim();
-        }
-
         // parse
         for (SqlCommand cmd : SqlCommand.values()) {
             final Matcher matcher = cmd.pattern.matcher(stmt);
@@ -100,6 +101,9 @@ public final class SqlCommandParser {
 
         CREATE_TABLE(
                 "(CREATE\\s+TABLE.*)",
+                SINGLE_OPERAND),
+        CREATE_VIEW(
+                "(CREATE\\s+VIEW\\s+(\\S+)\\s+AS.*)",
                 SINGLE_OPERAND),
         SET(
                 "SET(\\s+(\\S+)\\s*=(.*))?", // whitespace is only ignored on the left side of '='
