@@ -5,7 +5,7 @@ Flink任务、Spark任务提交到集群，通常需要将可执行Jar上传到�
 
 因此，为方便大数据开发人员进行快速开发调试，开发了从本地IDEA提交Flink/Spark任务到集群的工具类。任务提交代码稍加改造后也可以和上层调度系统进行集成，替代脚本模式进行任务提交的方式。
 
-- 支持Flink yarnPerJob、Standalone 、yarnSession模式下的任务提交。
+- 支持Flink yarnPerJob模式下的任务提交。
 
 - 支持Spark任务以Yarn Cluster模式提交到YARN，支持自动上传用户Jar包，依赖的Spark Jars需要提前上传到HDFS。
 
@@ -29,6 +29,8 @@ Flink任务、Spark任务提交到集群，通常需要将可执行Jar上传到�
  - example模块下包含一个FlinkDemo，打包后会转移到项目的examplJars中，可以尝试进行任务提交。
  - 任务提交后，根据ApplicationId获取任务执行使用的jm、tm日志基本信息，包含日志访问URL,日志总字节大小,根据日志基本信息可以做日志滚动展示，防止Yarn日志过大导致日志读取卡死。
  - 提供任务取消、任务状态获取、已完成任务日志获取接口。
+ 
+ V2版本增加flink-yarn-submiter-service，用来做多版本的隔离。新版本任务执行的入口类为 ClusterClient。
 
 任务操作示例：
  ```

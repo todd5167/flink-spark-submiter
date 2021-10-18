@@ -1,81 +1,83 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package cn.todd.flink.utils;
 
 import org.apache.flink.client.program.PackagedProgram;
 import org.apache.flink.client.program.PackagedProgramUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
-import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
-import org.apache.flink.util.Preconditions;
+import org.apache.flink.util.function.FunctionUtils;
 
-import cn.todd.flink.entity.JobParamsInfo;
-import org.apache.commons.io.FileUtils;
+import cn.todd.flink.entity.ParamsInfo;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Properties;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * 构建JobGraph 的工具类 Date: 2020/6/14
+ * Date: 2021/3/17
  *
  * @author todd5167
  */
 public class JobGraphBuildUtil {
+    private static final Logger LOG = LoggerFactory.getLogger(JobGraphBuildUtil.class);
 
     public static final String SAVE_POINT_PATH_KEY = "savePointPath";
     public static final String ALLOW_NON_RESTORED_STATE_KEY = "allowNonRestoredState";
     public static final String PARALLELISM = "parallelism";
 
-    public static JobGraph buildJobGraph(JobParamsInfo jobParamsInfo) throws Exception {
+    public static JobGraph buildJobGraph(ParamsInfo jobParamsInfo, Configuration flinkConfig)
+            throws Exception {
         Properties confProperties = jobParamsInfo.getConfProperties();
+        int parallelism =
+                Objects.isNull(confProperties)
+                        ? 1
+                        : Integer.valueOf(confProperties.getProperty(PARALLELISM, "1"));
 
-        int parallelism = MathUtil.getIntegerVal(confProperties.getProperty(PARALLELISM, "1"));
-        String flinkConfDir = jobParamsInfo.getFlinkConfDir();
-        String[] execArgs = jobParamsInfo.getExecArgs();
-        String runJarPath = jobParamsInfo.getRunJarPath();
-        String entryPointClassName = jobParamsInfo.getEntryPointClassName();
+        // build program
+        PackagedProgram.Builder builder = PackagedProgram.newBuilder();
+        Optional.ofNullable(jobParamsInfo.getExecArgs()).ifPresent(builder::setArguments);
+        Optional.ofNullable(jobParamsInfo.getEntryPointClassName())
+                .ifPresent(builder::setEntryPointClassName);
+        Optional.ofNullable(jobParamsInfo.getDependFiles())
+                .map(JobGraphBuildUtil::getUserClassPath)
+                .ifPresent(builder::setUserClassPaths);
+        // deal user jar path
+        builder.setJarFile(new File(jobParamsInfo.getRunJarPath()));
+        // deal savepoint config
+        Optional.ofNullable(confProperties)
+                .ifPresent(
+                        (properties) -> {
+                            SavepointRestoreSettings savepointRestoreSettings =
+                                    dealSavepointRestoreSettings(properties);
+                            builder.setSavepointRestoreSettings(savepointRestoreSettings);
+                        });
 
-        Preconditions.checkArgument(
-                FileUtils.getFile(runJarPath).exists(), "runJarPath not exist!");
+        PackagedProgram program = builder.build();
+        try {
+            JobGraph jobGraph =
+                    PackagedProgramUtils.createJobGraph(program, flinkConfig, parallelism, false);
+            // fixme: auto upload udf
+            Optional.ofNullable(program.getClasspaths()).ifPresent(jobGraph::addJars);
+            return jobGraph;
+        } finally {
+            program.deleteExtractedLibraries();
+        }
+    }
 
-        File runJarFile = new File(runJarPath);
-        SavepointRestoreSettings savepointRestoreSettings =
-                dealSavepointRestoreSettings(jobParamsInfo.getConfProperties());
+    private static List<URL> getUserClassPath(String[] jars) {
+        List<URL> collect =
+                Arrays.stream(jars)
+                        .map(FunctionUtils.uncheckedFunction(URL::new))
+                        .collect(Collectors.toList());
 
-        PackagedProgram program =
-                PackagedProgram.newBuilder()
-                        .setJarFile(runJarFile)
-                        .setArguments(execArgs)
-                        .setEntryPointClassName(entryPointClassName)
-                        .setSavepointRestoreSettings(savepointRestoreSettings)
-                        .build();
-
-        Configuration flinkConfig = getFlinkConfiguration(flinkConfDir);
-        JobGraph jobGraph =
-                PackagedProgramUtils.createJobGraph(program, flinkConfig, parallelism, false);
-
-        return jobGraph;
+        collect.stream().forEach(jar -> LOG.info("parsed user classpath from jars:{}", jar));
+        return collect;
     }
 
     public static Configuration getFlinkConfiguration(String flinkConfDir) {
@@ -96,9 +98,5 @@ public class JobGraphBuildUtil {
                             savePointPath, BooleanUtils.toBoolean(allowNonRestoredState));
         }
         return savepointRestoreSettings;
-    }
-
-    public static void fillDependFilesJobGraph(JobGraph jobGraph, String[] dependFiles) {
-        Arrays.stream(dependFiles).forEach(path -> jobGraph.addJar(new Path("file://" + path)));
     }
 }

@@ -19,18 +19,14 @@
 package cn.todd.flink.enums;
 
 /**
- * Flink任务运行模式
+ * flink run mode
  *
  * @author todd5167
  */
 public enum ERunMode {
-    /* 运行在已有的应用中，适合短期执行的任务 **/
-    YARN_SESSION,
-
-    /* 为Job新建应用，适合长期执行的任务 **/
     YARN_PERJOB,
 
-    STANDALONE;
+    YARN_APPLICATION;
 
     public static ERunMode convertFromString(String type) {
         if (type == null) {

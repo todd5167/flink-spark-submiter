@@ -16,26 +16,46 @@
  * limitations under the License.
  */
 
-package cn.todd.flink.factory;
-
-import org.apache.flink.client.deployment.ClusterDescriptor;
-import org.apache.flink.client.deployment.StandaloneClusterDescriptor;
-import org.apache.flink.configuration.Configuration;
-
-import static org.apache.flink.util.Preconditions.checkNotNull;
+package cn.todd.flink.enums;
 
 /**
- * Date: 2020/6/14
+ * Date: 2020/10/1
  *
  * @author todd5167
  */
-public enum StandaloneClientFactory implements AbstractClusterClientFactory {
-    INSTANCE;
+public enum ETaskStatus {
 
-    @Override
-    public ClusterDescriptor createClusterDescriptor(
-            String clusterConfPath, Configuration flinkConfig) {
-        checkNotNull(flinkConfig);
-        return new StandaloneClusterDescriptor(flinkConfig);
+    /** Application has been accepted by the scheduler */
+    ACCEPTED(23, "调度中"),
+
+    /** Application which is currently running. */
+    RUNNING(24, "运行中"),
+
+    /** Application which finished successfully. */
+    SUCCEEDED(25, "成功"),
+
+    /** Application which failed. */
+    FAILED(26, "失败"),
+
+    /** Application which was terminated by a user or admin. */
+    KILLED(27, "杀死"),
+
+    /** Application which not found . */
+    NOT_FOUND(28, "异常");
+
+    private int value;
+    private String desc;
+
+    ETaskStatus(int value, String desc) {
+        this.value = value;
+        this.desc = desc;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public String getDesc() {
+        return desc;
     }
 }

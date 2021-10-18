@@ -13,67 +13,108 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <flink.version>1.12.1</flink.version>
-        <hadoop.version>2.7.3</hadoop.version>
-        <httpmime.version>4.3.1</httpmime.version>
+        <kerb.version>2.0.1</kerb.version>
         <log4j.version>1.2.17</log4j.version>
-        <fastjson.version>1.2.58</fastjson.version>
-        <http.client.version>4.5.2</http.client.version>
+        <sl4j.version>1.6.1</sl4j.version>
+        <fastjson.version>1.2.76</fastjson.version>
         <flink.shaded.hadoop.version>2.7.5-7.0</flink.shaded.hadoop.version>
     </properties>
 
     <dependencies>
         <dependency>
+            <groupId>cn.todd.submiter</groupId>
+            <artifactId>flink-yarn-submiter-service</artifactId>
+            <version>1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.kerby</groupId>
+            <artifactId>kerb-core</artifactId>
+            <version>${kerb.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.kerby</groupId>
+            <artifactId>kerb-util</artifactId>
+            <version>${kerb.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-common</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-java-bridge_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-planner-blink_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-runtime-blink_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-java_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-cep-scala_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-statebackend-rocksdb_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-yarn_2.11</artifactId>
             <version>${flink.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
             <exclusions>
                 <exclusion>
                     <artifactId>flink-shaded-hadoop-2</artifactId>
@@ -106,44 +147,31 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-shaded-hadoop-2</artifactId>
             <version>${flink.shaded.hadoop.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpmime</artifactId>
-            <version>${httpmime.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${http.client.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>servlet-api</artifactId>
+                    <groupId>javax.servlet</groupId>
+                </exclusion>
+            </exclusions>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>${log4j.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>${fastjson.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${sl4j.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
-
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.11.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>19.0</version>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -155,6 +183,48 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>cn.todd.flink.ClusterClient</mainClass>
+                                </transformer>
+                                <!-- The service transformer is needed to merge META-INF/services files -->
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
+                            </transformers>
+                            <artifactSet>
+                                <includes>
+                                </includes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -178,9 +248,9 @@
                 <executions>
                     <execution>
                         <id>spotless-check</id>
-                        <phase>validate</phase>
+                        <phase>package</phase>
                         <goals>
-                            <goal>check</goal>
+                            <goal>apply</goal>
                         </goals>
                     </execution>
                 </executions>

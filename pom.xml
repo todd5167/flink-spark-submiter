@@ -12,6 +12,7 @@
         <module>spark-yarn-submiter</module>
         <module>spark-k8s-submiter</module>
         <module>flink-yarn-submiter</module>
+        <module>flink-yarn-submiter-service</module>
         <module>examples</module>
         <module>common</module>
     </modules>
